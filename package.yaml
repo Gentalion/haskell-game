@@ -15,7 +15,7 @@ library:
   source-dirs: src
 
 executables:
-  project-template-exe:
+  game:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -28,7 +28,7 @@ executables:
     - project-template
 
 tests:
-  project-template-test:
+  game-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
