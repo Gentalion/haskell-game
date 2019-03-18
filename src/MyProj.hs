@@ -4,8 +4,12 @@ module MyProj
     ( runMyProj
     ) where
 
+import Graphics.Gloss.Data.Picture
+
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
 data Control = Player | EnemyAI
+data GameState = Win | Lose | Playing
+type Position = (Int, Int)
 data TerrainType = TerNothing deriving Eq
 
 data Modifier = Modifier { modName :: String
@@ -24,12 +28,12 @@ data Squad = Squad { squadName :: String
                    , squadMods :: [Modifier]
                    }
 
-data Square = Square { sqTerrain :: TerrainType
-                     , sqSquad :: (Maybe Squad)
-                     }
+data Cell = Cell { sqTerrain :: TerrainType
+                 , sqSquad :: (Maybe Squad)
+                 , neighbors :: [Position]
+                 }
 
-type Position = (Int, Int)
-type Field = [(Position, Square)]
+type Field = [(Position, Cell)]
 
 allMAW :: [Modifier] -> Double -- filter all modifiers with ModifierType equal ModAddWhite and add them
 allMAW mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddWhite) mods))
@@ -46,11 +50,32 @@ unitRealPower Unit{..} = (unitBasePower + (allMAW unitMods)) * (allMM unitMods) 
 squadPower :: Squad -> Double
 squadPower = undefined
 
-generateField :: Field
+generateField :: Int -> Field
 generateField = undefined
+
+getCellsOnDistance :: Int -> Position -> Field -> [Cell]
+getCellsOnDistance = undefined
 
 moveSquad :: Field -> Position -> Position -> Field
 moveSquad = undefined
+
+enemyAIturn :: Field -> Field
+enemyAIturn = undefined
+
+drawMenu :: Picture
+drawMenu = undefined
+
+drawUnit :: Unit -> Picture
+drawUnit = undefined
+
+drawSquad :: Squad -> Picture
+drawSquad = undefined
+
+drawBattleScene :: Field -> Picture
+drawBattleScene = undefined
+
+checkGameState :: Field -> GameState
+checkGameState = undefined
 
 runMyProj :: IO ()
 runMyProj = putStrLn "This is a demo project!"
