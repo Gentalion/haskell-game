@@ -35,31 +35,38 @@ data Cell = Cell { sqTerrain :: TerrainType
 
 type Field = [(Position, Cell)]
 
-allMAW :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddWhite and add them
+data Battle = Battle { field :: Field
+                     , allies :: [Position]
+                     , enemies :: [Position]
+                     }
+
+allMAW :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddWhite and sum them
 allMAW mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddWhite) mods))
 
-allMAG :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddGreen and add them
+allMAG :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddGreen and sum them
 allMAG mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddGreen) mods))
 
 allMM :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModMultiply and multiply them
 allMM mods = foldr (*) 1.0 (map modValue (filter (\cur -> modType cur == ModMultiply) mods))
 
 unitRealPower :: Unit -> Float -- calculate unit power with modifiers
-unitRealPower Unit{..} = (unitBasePower + (allMAW unitMods)) * (allMM unitMods) + (allMAG unitMods)
+unitRealPower Unit{..} = (unitBasePower + (allMAW unitMods)) * (allMM unitMods) + (allMAG unitMods) -- power = (own power + white power) * power multiplier + green power
 
 squadPower :: Squad -> Float -- calculate squad power
 squadPower = undefined
 
-generateField :: Int -> Field -- generate Field with n Cell's
+generateField :: Int -> Field -- generate field with n cells
 generateField = undefined
 
-getCellsOnDistance :: Int -> Position -> Field -> [Cell] -- get all other Cell's on distance x
+getCellsOnDistance :: Int -> Battle -> Position -> [Cell] -- get all other cells on distance x
 getCellsOnDistance = undefined
 
-moveSquad :: Field -> Position -> Position -> Field -- move squad from one position to another
+getDistance :: Battle -> Position -> Position -> Int
+
+moveSquad :: Battle -> Position -> Position -> Battle -- move squad from one position to another
 moveSquad = undefined
 
-enemyAIturn :: Field -> Field -- turn for enemyAI
+enemyAIturn :: Battle -> Battle -- turn for enemyAI
 enemyAIturn = undefined
 
 drawMenu :: Picture -- draw interface outside of battle
@@ -71,10 +78,10 @@ drawUnit = undefined
 drawSquad :: Squad -> Picture -- draw single squad i.e. bunch of units
 drawSquad = undefined
 
-drawBattleScene :: Field -> Picture -- draw Field, all terrain and all Squads in it
+drawBattleScene :: Battle -> Picture -- draw field, all terrain and all squads in it
 drawBattleScene = undefined
 
-checkGameState :: Field -> GameState -- check whether a player won, lost or is still playing
+checkGameState :: Battle -> GameState -- check whether player won, lost or is still playing
 checkGameState = undefined
 
 runMyProj :: IO ()
