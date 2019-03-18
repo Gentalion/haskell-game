@@ -5,6 +5,7 @@ module MyProj
     ) where
 
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
+data Control = Player | EnemyAI
 data TerrainType = TerNothing deriving Eq
 
 data Modifier = Modifier { modName :: String
@@ -13,6 +14,7 @@ data Modifier = Modifier { modName :: String
                          }
 
 data Unit = Unit { unitName :: String
+                 , unitControl :: Control
                  , unitBasePower :: Double
                  , unitMods :: [Modifier]
                  }
@@ -22,12 +24,12 @@ data Squad = Squad { squadName :: String
                    , squadMods :: [Modifier]
                    }
 
-data Square = Square { sqId :: Integer
-                     , sqTerrain :: TerrainType
+data Square = Square { sqTerrain :: TerrainType
                      , sqSquad :: (Maybe Squad)
                      }
 
-type Field = [(Int,Square)]
+type Position = (Int, Int)
+type Field = [(Position, Square)]
 
 allMAW :: [Modifier] -> Double -- filter all modifiers with ModifierType equal ModAddWhite and add them
 allMAW mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddWhite) mods))
@@ -46,6 +48,9 @@ squadPower = undefined
 
 generateField :: Field
 generateField = undefined
+
+moveSquad :: Field -> Position -> Position -> Field
+moveSquad = undefined
 
 runMyProj :: IO ()
 runMyProj = putStrLn "This is a demo project!"
