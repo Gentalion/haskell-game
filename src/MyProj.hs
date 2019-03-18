@@ -14,12 +14,12 @@ data TerrainType = TerNothing deriving Eq
 
 data Modifier = Modifier { modName :: String
                          , modType :: ModifierType
-                         , modValue :: Double
+                         , modValue :: Float
                          }
 
 data Unit = Unit { unitName :: String
                  , unitControl :: Control
-                 , unitBasePower :: Double
+                 , unitBasePower :: Float
                  , unitMods :: [Modifier]
                  }
 
@@ -35,46 +35,46 @@ data Cell = Cell { sqTerrain :: TerrainType
 
 type Field = [(Position, Cell)]
 
-allMAW :: [Modifier] -> Double -- filter all modifiers with ModifierType equal ModAddWhite and add them
+allMAW :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddWhite and add them
 allMAW mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddWhite) mods))
 
-allMAG :: [Modifier] -> Double -- filter all modifiers with ModifierType equal ModAddGreen and add them
+allMAG :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddGreen and add them
 allMAG mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddGreen) mods))
 
-allMM :: [Modifier] -> Double -- filter all modifiers with ModifierType equal ModMultiply and multiply them
+allMM :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModMultiply and multiply them
 allMM mods = foldr (*) 1.0 (map modValue (filter (\cur -> modType cur == ModMultiply) mods))
 
-unitRealPower :: Unit -> Double
+unitRealPower :: Unit -> Float -- calculate unit power with modifiers
 unitRealPower Unit{..} = (unitBasePower + (allMAW unitMods)) * (allMM unitMods) + (allMAG unitMods)
 
-squadPower :: Squad -> Double
+squadPower :: Squad -> Float -- calculate squad power
 squadPower = undefined
 
-generateField :: Int -> Field
+generateField :: Int -> Field -- generate Field with n Cell's
 generateField = undefined
 
-getCellsOnDistance :: Int -> Position -> Field -> [Cell]
+getCellsOnDistance :: Int -> Position -> Field -> [Cell] -- get all other Cell's on distance x
 getCellsOnDistance = undefined
 
-moveSquad :: Field -> Position -> Position -> Field
+moveSquad :: Field -> Position -> Position -> Field -- move squad from one position to another
 moveSquad = undefined
 
-enemyAIturn :: Field -> Field
+enemyAIturn :: Field -> Field -- turn for enemyAI
 enemyAIturn = undefined
 
-drawMenu :: Picture
+drawMenu :: Picture -- draw interface outside of battle
 drawMenu = undefined
 
-drawUnit :: Unit -> Picture
+drawUnit :: Unit -> Picture -- draw single unit
 drawUnit = undefined
 
-drawSquad :: Squad -> Picture
+drawSquad :: Squad -> Picture -- draw single squad i.e. bunch of units
 drawSquad = undefined
 
-drawBattleScene :: Field -> Picture
+drawBattleScene :: Field -> Picture -- draw Field, all terrain and all Squads in it
 drawBattleScene = undefined
 
-checkGameState :: Field -> GameState
+checkGameState :: Field -> GameState -- check whether a player won, lost or is still playing
 checkGameState = undefined
 
 runMyProj :: IO ()
