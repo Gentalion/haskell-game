@@ -9,7 +9,7 @@ import Graphics.Gloss.Data.Picture
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
 data Control = Player | EnemyAI
 data GameState = Win | Lose | Playing
-type Position = (Int, Int)
+type Position = (Int, Int) 
 data TerrainType = TerNothing deriving Eq
 
 data Modifier = Modifier { modName :: String
@@ -38,6 +38,7 @@ type Field = [(Position, Cell)]
 data Battle = Battle { field :: Field
                      , allies :: [Position]
                      , enemies :: [Position]
+                     , selection :: Maybe Position
                      }
 
 allMAW :: [Modifier] -> Float -- filter all modifiers with ModifierType equal ModAddWhite and sum them
@@ -58,10 +59,17 @@ squadPower = undefined
 generateField :: Int -> Field -- generate field with n cells
 generateField = undefined
 
+isObstacle :: Cell -> Bool
+isObstacle = undefined
+
 getCellsOnDistance :: Int -> Battle -> Position -> [Cell] -- get all other cells on distance x
 getCellsOnDistance = undefined
 
-getDistance :: Battle -> Position -> Position -> Int
+getShortestDistance :: Battle -> Position -> Position -> Int -- get distance without obstacles
+getShortestDistance = undefined
+
+getMarchDistance :: Battle -> Position -> Position -> Int -- get distance with obstacles
+getMarchDistance = undefined
 
 moveSquad :: Battle -> Position -> Position -> Battle -- move squad from one position to another
 moveSquad = undefined
