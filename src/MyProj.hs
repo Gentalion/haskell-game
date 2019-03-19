@@ -2,7 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module MyProj
-    ( runTheGame
+    ( runTheGame, getStraightDistance
     ) where
 
 import Graphics.Gloss.Data.Picture
@@ -34,9 +34,9 @@ data Cell = Cell { terrain :: TerrainType
                  , squad :: (Maybe Squad)
                  }
 
-type Field = [(Position, Cell)]
+type HexField = [(Position, Cell)]
 
-data Battle = Battle { field :: Field
+data Battle = Battle { field :: HexField
                      , allies :: [Position]
                      , enemies :: [Position]
                      , selection :: Maybe Position
@@ -63,9 +63,9 @@ unitRealPower Unit{..} = (basePower + (allMAW mods)) * (allMM mods) + (allMAG mo
 squadPower :: Squad -> Float
 squadPower = undefined
 
--- generate field as hexogonal grid with such height and width
-generateHexGrid :: Int -> Int -> Field
-generateHexGrid height width = [((x, y), Cell {terrain = TerNothing, squad = Nothing}) | x <- [0..height-1], y <- [0..width-1]]
+-- generate field with such height and width
+generateHexField :: Int -> Int -> HexField
+generateHexField height width = [((x, y), Cell {terrain = TerNothing, squad = Nothing}) | x <- [0..height-1], y <- [0..width-1]]
 
 -- check whether terrain is obstacle or there is a squads
 isObstacle :: Cell -> Bool
@@ -75,9 +75,36 @@ isObstacle = undefined
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Position -> [Position]
 getCellsOnStraightDistanceOrLess = undefined
 
+-- it's magic or math
+hexOffsetX :: Int -> Int -> Int
+hexOffsetX dx dy =
+    let xSign = signum dx
+        ySign = signum dy 
+        yMod2 = mod dy 2
+    in case (xSign, ySign, yMod2) of
+        (-1,-1, 0) ->  0
+        (-1,-1, 1) -> -1
+        ( 1, 1, 0) ->  1
+        ( 1, 1, 1) ->  0
+        (-1, 1, 0) -> -1
+        (-1, 1, 1) ->  0
+        ( 1,-1, 0) ->  0
+        ( 1,-1, 1) ->  1
+        otherwise  ->  0
+
+-- it's definitely not magic
+hexOffsetY :: Int -> Int -> Int
+hexOffsetY dx dy = signum dy
+
 -- get distance without obstacles
-getStraightDistance :: Battle -> Position -> Position -> Int
-getStraightDistance = undefined
+getStraightDistance :: Position -> Position -> Int
+getStraightDistance (x1,y1) (x2,y2) = 
+    let dx = x1 - x2
+        dy = y1 - y2
+    in case (abs dx, abs dy) of
+        (0, n) -> n
+        (n, 0) -> n
+        (a, b) -> 1 + getStraightDistance (x1, y1) (x2 + hexOffsetX dx dy, y2 + hexOffsetY dx dy)
 
 -- get distance with obstacles
 getMarchDistance :: Battle -> Position -> Position -> Int
