@@ -2,7 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module MyProj
-    ( runTheGame, getStraightDistance
+    ( runTheGame, getStraightDistance, hexLeft, hexRight, hexLeftUp, hexRightUp, hexLeftDown, hexRightDown
     ) where
 
 import Graphics.Gloss.Data.Picture
@@ -10,7 +10,7 @@ import Graphics.Gloss.Data.Picture
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
 data Control = Player | EnemyAI
 data GameState = Win | Lose | Playing
-type Position = (Int, Int) -- first Int stands for column, second for row
+type Position = (Int, Int) -- first int stands for column, second for row
 type Turn = (Position, Position)
 data TerrainType = TerNothing deriving Eq
 
@@ -34,7 +34,7 @@ data Cell = Cell { terrain :: TerrainType
                  , squad :: (Maybe Squad)
                  }
 
-type HexField = [(Position, Cell)]
+type HexField = [(Position, Cell)] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
 data Battle = Battle { field :: HexField
                      , allies :: [Position]
@@ -67,44 +67,49 @@ squadPower = undefined
 generateHexField :: Int -> Int -> HexField
 generateHexField height width = [((x, y), Cell {terrain = TerNothing, squad = Nothing}) | x <- [0..height-1], y <- [0..width-1]]
 
--- check whether terrain is obstacle or there is a squads
-isObstacle :: Cell -> Bool
-isObstacle = undefined
+hexLeft :: Position -> Position
+hexLeft (x, y) = (x - 1, y)
 
+hexLeftUp :: Position -> Position
+hexLeftUp (x, y) | (mod y 2) == 1 = (x - 1, y - 1)
+                 | otherwise      = (x    , y - 1)
+
+hexLeftDown :: Position -> Position
+hexLeftDown (x, y) | (mod y 2) == 1 = (x - 1, y + 1)
+                   | otherwise      = (x    , y + 1)
+
+hexRight :: Position -> Position
+hexRight (x, y) = (x + 1, y)
+
+hexRightUp :: Position -> Position
+hexRightUp (x, y) | (mod y 2) == 1 = (x    , y - 1)
+                  | otherwise      = (x + 1, y - 1)
+
+hexRightDown :: Position -> Position
+hexRightDown (x, y) | (mod y 2) == 1 = (x    , y + 1)
+                    | otherwise      = (x + 1, y + 1)
+
+-- get distance without obstacles
+getStraightDistance :: Position -> Position -> Int
+getStraightDistance (x1,y1) (x2,y2) =
+    let dx = x1 - x2
+        dy = y1 - y2
+    in case (abs dx, abs dy, signum dx, signum dy) of
+        (0,n, _, _) -> n
+        (n,0, _, _) -> n
+        (_,_, 1, 1) -> 1 + getStraightDistance (hexLeftUp    (x1,y1)) (x2,y2)
+        (_,_,-1,-1) -> 1 + getStraightDistance (hexRightDown (x1,y1)) (x2,y2)
+        (_,_,-1, 1) -> 1 + getStraightDistance (hexRightUp   (x1,y1)) (x2,y2)
+        (_,_, 1,-1) -> 1 + getStraightDistance (hexLeftDown  (x1,y1)) (x2,y2)
+        
 -- get all other cells on distance x
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Position -> [Position]
 getCellsOnStraightDistanceOrLess = undefined
 
--- it's magic or math
-hexOffsetX :: Int -> Int -> Int
-hexOffsetX dx dy =
-    let xSign = signum dx
-        ySign = signum dy 
-        yMod2 = mod dy 2
-    in case (xSign, ySign, yMod2) of
-        (-1,-1, 0) ->  0
-        (-1,-1, 1) -> -1
-        ( 1, 1, 0) ->  1
-        ( 1, 1, 1) ->  0
-        (-1, 1, 0) -> -1
-        (-1, 1, 1) ->  0
-        ( 1,-1, 0) ->  0
-        ( 1,-1, 1) ->  1
-        otherwise  ->  0
+-- check whether terrain is obstacle or there is a squad
+isObstacle :: Cell -> Bool
+isObstacle = undefined
 
--- it's definitely not magic
-hexOffsetY :: Int -> Int -> Int
-hexOffsetY dx dy = signum dy
-
--- get distance without obstacles
-getStraightDistance :: Position -> Position -> Int
-getStraightDistance (x1,y1) (x2,y2) = 
-    let dx = x1 - x2
-        dy = y1 - y2
-    in case (abs dx, abs dy) of
-        (0, n) -> n
-        (n, 0) -> n
-        (a, b) -> 1 + getStraightDistance (x1, y1) (x2 + hexOffsetX dx dy, y2 + hexOffsetY dx dy)
 
 -- get distance with obstacles
 getMarchDistance :: Battle -> Position -> Position -> Int
