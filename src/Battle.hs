@@ -22,15 +22,19 @@ data Unit = Unit { name :: String
                  }
 
 data Squad = Squad { name :: String
+                   , steps :: Int
+                   , maxMoveDist :: Int
+                   , attackDist :: Int
                    , members :: [Unit]
                    , mods :: [Modifier]
                    }
 
-data Cell = Cell { terrain :: TerrainType
+data Cell = Cell { position :: Position
+                 , terrain :: TerrainType
                  , squad :: (Maybe Squad)
                  }
 
-type HexField = [(Position, Cell)] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
+type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
 data Battle = Battle { field :: HexField
                      , fieldHeight :: Int
@@ -63,7 +67,7 @@ squadPower = undefined
 
 -- generate field with such height and width
 generateHexField :: Int -> Int -> HexField
-generateHexField height width = [((x, y), Cell {terrain = TerNothing, squad = Nothing}) | x <- [0 .. height - 1], y <- [0 .. width - 1]]
+generateHexField height width = [Cell {position = (x, y), terrain = TerNothing, squad = Nothing} | x <- [0 .. height - 1], y <- [0 .. width - 1]]
 
 hexLeft :: Position -> Position
 hexLeft (x, y) = (x - 1, y)
@@ -103,6 +107,9 @@ getStraightDistance (x1,y1) (x2,y2) =
 -- get all other cells on distance x
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Position -> [Position]
 getCellsOnStraightDistanceOrLess = undefined
+
+getCell :: Battle -> Position -> Cell
+getCell = undefined
 
 -- check whether terrain is obstacle or there is a squad
 isObstacle :: Cell -> Bool
