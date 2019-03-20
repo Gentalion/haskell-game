@@ -1,11 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module MyProj
-    ( runTheGame, getStraightDistance, hexLeft, hexRight, hexLeftUp, hexRightUp, hexLeftDown, hexRightDown
-    ) where
-
-import Graphics.Gloss.Data.Picture
+module Battle where
 
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
 data Control = Player | EnemyAI
@@ -65,7 +61,7 @@ squadPower = undefined
 
 -- generate field with such height and width
 generateHexField :: Int -> Int -> HexField
-generateHexField height width = [((x, y), Cell {terrain = TerNothing, squad = Nothing}) | x <- [0..height-1], y <- [0..width-1]]
+generateHexField height width = [((x, y), Cell {terrain = TerNothing, squad = Nothing}) | x <- [0 .. height - 1], y <- [0 .. width - 1]]
 
 hexLeft :: Position -> Position
 hexLeft (x, y) = (x - 1, y)
@@ -101,7 +97,7 @@ getStraightDistance (x1,y1) (x2,y2) =
         (_,_,-1,-1) -> 1 + getStraightDistance (hexRightDown (x1,y1)) (x2,y2)
         (_,_,-1, 1) -> 1 + getStraightDistance (hexRightUp   (x1,y1)) (x2,y2)
         (_,_, 1,-1) -> 1 + getStraightDistance (hexLeftDown  (x1,y1)) (x2,y2)
-        
+
 -- get all other cells on distance x
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Position -> [Position]
 getCellsOnStraightDistanceOrLess = undefined
@@ -123,25 +119,6 @@ moveSquad = undefined
 enemyAIturn :: Battle -> Battle
 enemyAIturn = undefined
 
--- draw interface outside of battle
-drawMenu :: Picture
-drawMenu = undefined
-
--- draw single unit
-drawUnit :: Unit -> Picture
-drawUnit = undefined
-
--- draw single squad i.e. bunch of units
-drawSquad :: Squad -> Picture
-drawSquad = undefined
-
--- draw field, all terrain and all squads in it
-drawBattleScene :: Battle -> Picture
-drawBattleScene = undefined
-
 -- check whether player won, lost or is still playing
 checkGameState :: Battle -> GameState
 checkGameState = undefined
-
-runTheGame :: IO ()
-runTheGame = putStrLn "This is a proud little game!"

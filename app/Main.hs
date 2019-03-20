@@ -1,8 +1,8 @@
 module Main where
 
-import MyProj
+import RunGame
 
 main :: IO ()
 main = do
   -- putStrLn "Hello World!"
-  runTheGame
+  runGame

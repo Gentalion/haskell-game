@@ -1,4 +1,4 @@
-import MyProj
+import Battle
 
 test :: (Int, Int) -> IO ()
 test (x, y) = do 
@@ -22,4 +22,5 @@ main = do
     print (getStraightDistance (6,0) (0,6))
     print (getStraightDistance (0,0) (4,6))
     print (getStraightDistance (4,6) (0,0))
+    print (foldr1 max [getStraightDistance a b | a <- map fst (generateHexField 7 7), b <- map fst (generateHexField 7 7)])
 
