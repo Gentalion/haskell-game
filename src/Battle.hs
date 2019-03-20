@@ -9,7 +9,7 @@ import Hex (Position)
 import qualified Hex as Hex
 
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
-data Control = Player | EnemyAI
+data Control = Player | EnemyAI | NoControl
 data GameState = Win | Lose | Playing
 type Turn = (Position, Position)
 data TerrainType = TerNothing deriving Eq
@@ -20,12 +20,12 @@ data Modifier = Modifier { modName :: String
                          }
 
 data Unit = Unit { name :: String
-                 , control :: Control
                  , basePower :: Float
                  , mods :: [Modifier]
                  }
 
 data Squad = Squad { name :: String
+                   , control :: Control
                    , steps :: Int
                    , maxMoveDist :: Int
                    , attackDist :: Int
@@ -35,7 +35,7 @@ data Squad = Squad { name :: String
 
 data Cell = Cell { position :: Position
                  , terrain :: TerrainType
-                 , squad :: (Maybe Squad)
+                 , squad :: Maybe Squad
                  }
 
 type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
@@ -45,6 +45,7 @@ data Battle = Battle { field :: HexField
                      , fieldWidth :: Int
                      , allies :: [Position]
                      , enemies :: [Position]
+                     , enemiesRemaining :: Int
                      , selection :: Maybe Position
                      , previousTurns :: [Turn]
                      }
@@ -69,9 +70,12 @@ unitRealPower Unit{..} = (basePower + (allMAW mods)) * (allMM mods) + (allMAG mo
 squadPower :: Squad -> Float
 squadPower = undefined
 
+emptyCell :: Position -> Cell
+emptyCell pos = Cell {position = pos, terrain = TerNothing, squad = Nothing}
+
 -- generate field with such height and width
 generateHexField :: Int -> Int -> HexField
-generateHexField height width = [Cell {position = (x, y), terrain = TerNothing, squad = Nothing} | x <- [0 .. height - 1], y <- [0 .. width - 1]]
+generateHexField height width = [emptyCell (x,y) | x <- [0 .. height - 1], y <- [0 .. width - 1]]
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
@@ -133,6 +137,41 @@ isObstacle = undefined
 getMarchDistance :: Battle -> Position -> Position -> Int
 getMarchDistance = undefined
 
+modifyHexFieldWithCell :: HexField -> Cell -> HexField
+modifyHexFieldWithCell [] _ = error "Impossible #1"
+modifyHexFieldWithCell (x:xs) c | (position x) == (position c) = c:xs
+                                | otherwise = modifyHexFieldWithCell xs c 
+
+excludeCell :: [Position] -> Position -> [Position]
+excludeCell [] _ = []
+excludeCell (x:xs) pos | pos == x = xs
+                       | otherwise = x:(excludeCell xs pos)
+
+modifyBattleWithCell' :: Battle -> Cell -> [Position] -> [Position] -> Battle
+modifyBattleWithCell' b c newAllies newEnemies = b {field = (modifyHexFieldWithCell (field b) c), allies = newAllies, enemies = newEnemies}
+
+modifyBattleWithCell :: Battle -> Cell -> Battle
+modifyBattleWithCell b c =
+    let pos = position c
+        prevCellOccup = case (squad (maybe (emptyCell pos) id (getCell b pos))) of
+            (Nothing) -> NoControl
+            (Just ps) -> control ps
+        newCellOccup = case (squad c) of
+            (Nothing) -> NoControl
+            (Just ns) -> control ns
+        bAllies = allies b
+        bEnemies = enemies b
+    in case (prevCellOccup, newCellOccup) of
+        (NoControl, NoControl) -> modifyBattleWithCell' b c              bAllies                   bEnemies
+        (NoControl,    Player) -> modifyBattleWithCell' b c         (pos:bAllies)                  bEnemies
+        (NoControl,   EnemyAI) -> modifyBattleWithCell' b c              bAllies              (pos:bEnemies)
+        (   Player, NoControl) -> modifyBattleWithCell' b c (excludeCell bAllies pos)              bEnemies
+        (   Player,    Player) -> modifyBattleWithCell' b c              bAllies                   bEnemies
+        (   Player,   EnemyAI) -> modifyBattleWithCell' b c (excludeCell bAllies pos)         (pos:bEnemies)
+        (  EnemyAI, NoControl) -> modifyBattleWithCell' b c              bAllies      (excludeCell bEnemies pos)
+        (  EnemyAI,    Player) -> modifyBattleWithCell' b c         (pos:bAllies)     (excludeCell bEnemies pos)
+        (  EnemyAI,   EnemyAI) -> modifyBattleWithCell' b c              bAllies                   bEnemies
+
 -- move squad from one position to another
 moveSquad :: Battle -> Position -> Position -> Battle
 moveSquad = undefined
@@ -143,4 +182,7 @@ enemyAIturn = undefined
 
 -- check whether player won, lost or is still playing
 checkGameState :: Battle -> GameState
-checkGameState = undefined
+checkGameState b = case (allies b, enemies b, enemiesRemaining b) of
+    ([], _,_) -> Lose
+    ( _,[],0) -> Win
+    ( _, _,_) -> Playing
