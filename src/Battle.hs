@@ -81,31 +81,31 @@ getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
 
 -- get Cell from its position
-getCellFromHexField :: HexField -> Position -> Maybe Cell
-getCellFromHexField [] pos = Nothing
-getCellFromHexField (x:xs) pos | (pos == position x) = Just x
+getCellFromHexField :: HexField -> Position -> Cell
+getCellFromHexField [] pos = emptyCell pos
+getCellFromHexField (x:xs) pos | (pos == position x) = x
                                | otherwise = getCellFromHexField xs pos
 
-getCell :: Battle -> Position -> Maybe Cell
+getCell :: Battle -> Position -> Cell
 getCell b pos = getCellFromHexField (field b) pos
 
-cellLeft :: Battle -> Cell -> [Cell]
-cellLeft b c = maybe [] (\x -> x:[]) (getCell b (Hex.left (position c)))
+cellLeft :: Battle -> Cell -> Cell
+cellLeft b c = getCell b (Hex.left (position c))
 
-cellLeftUp :: Battle -> Cell -> [Cell]
-cellLeftUp b c = maybe [] (\x -> x:[]) (getCell b (Hex.leftUp (position c)))
+cellLeftUp :: Battle -> Cell -> Cell
+cellLeftUp b c = getCell b (Hex.leftUp (position c))
 
-cellLeftDown :: Battle -> Cell -> [Cell]
-cellLeftDown b c = maybe [] (\x -> x:[]) (getCell b (Hex.leftDown (position c)))
+cellLeftDown :: Battle -> Cell -> Cell
+cellLeftDown b c = getCell b (Hex.leftDown (position c))
 
-cellRight :: Battle -> Cell -> [Cell]
-cellRight b c = maybe [] (\x -> x:[]) (getCell b (Hex.right (position c)))
+cellRight :: Battle -> Cell -> Cell
+cellRight b c = getCell b (Hex.right (position c))
 
-cellRightUp :: Battle -> Cell -> [Cell]
-cellRightUp b c = maybe [] (\x -> x:[]) (getCell b (Hex.rightUp (position c)))
+cellRightUp :: Battle -> Cell -> Cell
+cellRightUp b c = getCell b (Hex.rightUp (position c))
 
-cellRightDown :: Battle -> Cell -> [Cell]
-cellRightDown b c = maybe [] (\x -> x:[]) (getCell b (Hex.rightDown (position c)))
+cellRightDown :: Battle -> Cell -> Cell
+cellRightDown b c = getCell b (Hex.rightDown (position c))
 
 legitCells :: Battle -> [Cell] -> [Cell]
 legitCells b cells =
@@ -114,7 +114,7 @@ legitCells b cells =
     in [c | c <- cells, (fst (position c)) >=  0, (fst (position c)) <=  h, (snd (position c)) >=  0, (snd (position c)) <=  w]
 
 getNeighbors :: Battle -> Cell -> [Cell]
-getNeighbors b c = (cellLeft b c)++(cellLeftUp b c)++(cellLeftDown b c)++(cellRight b c)++(cellRightUp b c)++(cellRightDown b c)
+getNeighbors b c = legitCells b ((cellLeft b c):(cellLeftUp b c):(cellLeftDown b c):(cellRight b c):(cellRightUp b c):(cellRightDown b c):[])
 
 -- second [Cell] is used as accumulating parameter
 clearFromDuplicates :: [Cell] -> [Cell] -> [Cell]
@@ -153,7 +153,7 @@ modifyBattleWithCell' b c newAllies newEnemies = b {field = (modifyHexFieldWithC
 modifyBattleWithCell :: Battle -> Cell -> Battle
 modifyBattleWithCell b c =
     let pos = position c
-        prevCellOccup = case (squad (maybe (emptyCell pos) id (getCell b pos))) of
+        prevCellOccup = case (squad (getCell b pos)) of
             (Nothing) -> NoControl
             (Just ps) -> control ps
         newCellOccup = case (squad c) of
