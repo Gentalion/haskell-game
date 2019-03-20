@@ -33,6 +33,8 @@ data Cell = Cell { terrain :: TerrainType
 type HexField = [(Position, Cell)] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
 data Battle = Battle { field :: HexField
+                     , fieldHeight :: Int
+                     , fieldWidth :: Int
                      , allies :: [Position]
                      , enemies :: [Position]
                      , selection :: Maybe Position
