@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module RunGame where
+module Draw where
 
 import Graphics.Gloss
 import Battle
