@@ -92,24 +92,60 @@ hexRightDown (x, y) | (mod y 2) == 1 = (x    , y + 1)
                     | otherwise      = (x + 1, y + 1)
 
 -- get distance without obstacles
-getStraightDistance :: Position -> Position -> Int
-getStraightDistance (x1,y1) (x2,y2) =
+getStraightDistanceByPos :: Position -> Position -> Int
+getStraightDistanceByPos (x1,y1) (x2,y2) =
     let dx = x1 - x2
         dy = y1 - y2
     in case (abs dx, abs dy, signum dx, signum dy) of
         (0,n, _, _) -> n
         (n,0, _, _) -> n
-        (_,_, 1, 1) -> 1 + getStraightDistance (hexLeftUp    (x1,y1)) (x2,y2)
-        (_,_,-1,-1) -> 1 + getStraightDistance (hexRightDown (x1,y1)) (x2,y2)
-        (_,_,-1, 1) -> 1 + getStraightDistance (hexRightUp   (x1,y1)) (x2,y2)
-        (_,_, 1,-1) -> 1 + getStraightDistance (hexLeftDown  (x1,y1)) (x2,y2)
+        (_,_, 1, 1) -> 1 + getStraightDistanceByPos (hexLeftUp    (x1,y1)) (x2,y2)
+        (_,_,-1,-1) -> 1 + getStraightDistanceByPos (hexRightDown (x1,y1)) (x2,y2)
+        (_,_,-1, 1) -> 1 + getStraightDistanceByPos (hexRightUp   (x1,y1)) (x2,y2)
+        (_,_, 1,-1) -> 1 + getStraightDistanceByPos (hexLeftDown  (x1,y1)) (x2,y2)
+
+getStraightDistance :: Cell -> Cell -> Int
+getStraightDistance c1 c2 = getStraightDistanceByPos (position c1) (position c2)
+
+-- get Cell from its position
+getCellFromHexField :: HexField -> Position -> Maybe Cell
+getCellFromHexField [] pos = Nothing
+getCellFromHexField (x:xs) pos | (pos == position x) = Just x
+                               | otherwise = getCellFromHexField xs pos
+
+getCell :: Battle -> Position -> Maybe Cell
+getCell b pos = getCellFromHexField (field b) pos
+
+cellLeft :: Battle -> Cell -> [Cell]
+cellLeft b c = maybe [] (\x -> x:[]) (getCell b (hexLeft (position c)))
+
+cellLeftUp :: Battle -> Cell -> [Cell]
+cellLeftUp b c = maybe [] (\x -> x:[]) (getCell b (hexLeftUp (position c)))
+
+cellLeftDown :: Battle -> Cell -> [Cell]
+cellLeftDown b c = maybe [] (\x -> x:[]) (getCell b (hexLeftDown (position c)))
+
+cellRight :: Battle -> Cell -> [Cell]
+cellRight b c = maybe [] (\x -> x:[]) (getCell b (hexRight (position c)))
+
+cellRightUp :: Battle -> Cell -> [Cell]
+cellRightUp b c = maybe [] (\x -> x:[]) (getCell b (hexRightUp (position c)))
+
+cellRightDown :: Battle -> Cell -> [Cell]
+cellRightDown b c = maybe [] (\x -> x:[]) (getCell b (hexRightDown (position c)))
+
+legitCells :: Battle -> [Cell] -> [Cell]
+legitCells b cells =
+    let h = (fieldHeight b) - 1
+        w = (fieldWidth  b) - 1
+    in [c | c <- cells, (fst (position c)) >=  0, (fst (position c)) <=  h, (snd (position c)) >=  0, (snd (position c)) <=  w]
+
+getNeighbors :: Battle -> Cell -> [Cell]
+getNeighbors b c = (cellLeft b c)++(cellLeftUp b c)++(cellLeftDown b c)++(cellRight b c)++(cellRightUp b c)++(cellRightDown b c)
 
 -- get all other cells on distance x
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Position -> [Position]
 getCellsOnStraightDistanceOrLess = undefined
-
-getCell :: Battle -> Position -> Cell
-getCell = undefined
 
 -- check whether terrain is obstacle or there is a squad
 isObstacle :: Cell -> Bool
