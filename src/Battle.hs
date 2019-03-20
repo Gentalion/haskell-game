@@ -3,6 +3,10 @@
 
 module Battle where
 
+import Data.Set (Set)
+import qualified Data.Set as Set
+import qualified Hex as Hex
+
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
 data Control = Player | EnemyAI
 data GameState = Win | Lose | Playing
@@ -69,43 +73,8 @@ squadPower = undefined
 generateHexField :: Int -> Int -> HexField
 generateHexField height width = [Cell {position = (x, y), terrain = TerNothing, squad = Nothing} | x <- [0 .. height - 1], y <- [0 .. width - 1]]
 
-hexLeft :: Position -> Position
-hexLeft (x, y) = (x - 1, y)
-
-hexLeftUp :: Position -> Position
-hexLeftUp (x, y) | (mod y 2) == 1 = (x - 1, y - 1)
-                 | otherwise      = (x    , y - 1)
-
-hexLeftDown :: Position -> Position
-hexLeftDown (x, y) | (mod y 2) == 1 = (x - 1, y + 1)
-                   | otherwise      = (x    , y + 1)
-
-hexRight :: Position -> Position
-hexRight (x, y) = (x + 1, y)
-
-hexRightUp :: Position -> Position
-hexRightUp (x, y) | (mod y 2) == 1 = (x    , y - 1)
-                  | otherwise      = (x + 1, y - 1)
-
-hexRightDown :: Position -> Position
-hexRightDown (x, y) | (mod y 2) == 1 = (x    , y + 1)
-                    | otherwise      = (x + 1, y + 1)
-
--- get distance without obstacles
-getStraightDistanceByPos :: Position -> Position -> Int
-getStraightDistanceByPos (x1,y1) (x2,y2) =
-    let dx = x1 - x2
-        dy = y1 - y2
-    in case (abs dx, abs dy, signum dx, signum dy) of
-        (0,n, _, _) -> n
-        (n,0, _, _) -> n
-        (_,_, 1, 1) -> 1 + getStraightDistanceByPos (hexLeftUp    (x1,y1)) (x2,y2)
-        (_,_,-1,-1) -> 1 + getStraightDistanceByPos (hexRightDown (x1,y1)) (x2,y2)
-        (_,_,-1, 1) -> 1 + getStraightDistanceByPos (hexRightUp   (x1,y1)) (x2,y2)
-        (_,_, 1,-1) -> 1 + getStraightDistanceByPos (hexLeftDown  (x1,y1)) (x2,y2)
-
 getStraightDistance :: Cell -> Cell -> Int
-getStraightDistance c1 c2 = getStraightDistanceByPos (position c1) (position c2)
+getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
 
 -- get Cell from its position
 getCellFromHexField :: HexField -> Position -> Maybe Cell
@@ -117,22 +86,22 @@ getCell :: Battle -> Position -> Maybe Cell
 getCell b pos = getCellFromHexField (field b) pos
 
 cellLeft :: Battle -> Cell -> [Cell]
-cellLeft b c = maybe [] (\x -> x:[]) (getCell b (hexLeft (position c)))
+cellLeft b c = maybe [] (\x -> x:[]) (getCell b (Hex.left (position c)))
 
 cellLeftUp :: Battle -> Cell -> [Cell]
-cellLeftUp b c = maybe [] (\x -> x:[]) (getCell b (hexLeftUp (position c)))
+cellLeftUp b c = maybe [] (\x -> x:[]) (getCell b (Hex.leftUp (position c)))
 
 cellLeftDown :: Battle -> Cell -> [Cell]
-cellLeftDown b c = maybe [] (\x -> x:[]) (getCell b (hexLeftDown (position c)))
+cellLeftDown b c = maybe [] (\x -> x:[]) (getCell b (Hex.leftDown (position c)))
 
 cellRight :: Battle -> Cell -> [Cell]
-cellRight b c = maybe [] (\x -> x:[]) (getCell b (hexRight (position c)))
+cellRight b c = maybe [] (\x -> x:[]) (getCell b (Hex.right (position c)))
 
 cellRightUp :: Battle -> Cell -> [Cell]
-cellRightUp b c = maybe [] (\x -> x:[]) (getCell b (hexRightUp (position c)))
+cellRightUp b c = maybe [] (\x -> x:[]) (getCell b (Hex.rightUp (position c)))
 
 cellRightDown :: Battle -> Cell -> [Cell]
-cellRightDown b c = maybe [] (\x -> x:[]) (getCell b (hexRightDown (position c)))
+cellRightDown b c = maybe [] (\x -> x:[]) (getCell b (Hex.rightDown (position c)))
 
 legitCells :: Battle -> [Cell] -> [Cell]
 legitCells b cells =
@@ -143,10 +112,18 @@ legitCells b cells =
 getNeighbors :: Battle -> Cell -> [Cell]
 getNeighbors b c = (cellLeft b c)++(cellLeftUp b c)++(cellLeftDown b c)++(cellRight b c)++(cellRightUp b c)++(cellRightDown b c)
 
--- get all other cells on distance x
-getCellsOnStraightDistanceOrLess :: Int -> Battle -> Position -> [Position]
-getCellsOnStraightDistanceOrLess = undefined
+-- second [Cell] is used as accumulating parameter
+clearFromDuplicates :: [Cell] -> [Cell] -> [Cell]
+clearFromDuplicates [] res = res
+clearFromDuplicates (x:xs) [] = clearFromDuplicates xs (x:[])
+clearFromDuplicates (x:xs) res | not (foldr (\y res -> res || position x == position y) False res) = clearFromDuplicates xs (x:res)
+                               | otherwise = clearFromDuplicates xs res
 
+-- get all other cells on distance x
+getCellsOnStraightDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
+getCellsOnStraightDistanceOrLess 1 b c = getNeighbors b c
+getCellsOnStraightDistanceOrLess n b c = clearFromDuplicates (foldr1 (++) (map (getCellsOnStraightDistanceOrLess (n-1) b) (getNeighbors b c))) []
+--getCellsOnStraightDistanceOrLess n b c = Set.toList (foldr Set.union (Set.empty) (foldr (\x res -> (Set.fromList (getCellsOnStraightDistanceOrLess (n-1) b x)):res) [] (getNeighbors b c)))
 -- check whether terrain is obstacle or there is a squad
 isObstacle :: Cell -> Bool
 isObstacle = undefined
