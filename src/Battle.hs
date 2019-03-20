@@ -5,12 +5,12 @@ module Battle where
 
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Hex (Position)
 import qualified Hex as Hex
 
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
 data Control = Player | EnemyAI
 data GameState = Win | Lose | Playing
-type Position = (Int, Int) -- first int stands for column, second for row
 type Turn = (Position, Position)
 data TerrainType = TerNothing deriving Eq
 
