@@ -3,7 +3,7 @@
 
 module Squad where
 
-data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
+data ModifierType = ModAddWhite | ModAddGreen | ModMultiply | ModWound deriving Eq
 data Control = Player | EnemyAI | NoControl
 
 data Modifier = Modifier { modName :: String
@@ -37,10 +37,13 @@ allMAG mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAdd
 allMM :: [Modifier] -> Float
 allMM mods = foldr (*) 1.0 (map modValue (filter (\cur -> modType cur == ModMultiply) mods))
 
+allWounds :: [Modifier] -> Float
+allWounds mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModWound) mods))
+
 -- calculate unit power with modifiers
 unitRealPower :: Unit -> Float
 unitRealPower Unit{..} = (basePower + (allMAW mods)) * (allMM mods) + (allMAG mods) -- power = (own power + white power) * power multiplier + green power
 
 -- calculate squad power
 squadPower :: Squad -> Float
-squadPower = undefined
+squadPower s = (foldr (\x res -> res + (unitRealPower x)) 0.0 (members s)) - (allWounds (mods (s :: Squad)))

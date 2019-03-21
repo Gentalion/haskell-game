@@ -27,6 +27,7 @@ data Battle = Battle { field :: HexField
                      , enemies :: [Position]
                      , enemiesRemaining :: Int
                      , selection :: Maybe Position
+                     , possibleMoves :: [Position]
                      , previousTurns :: [Turn]
                      }
 
@@ -110,14 +111,20 @@ getCellsOnMarchDistanceOrLess' n b c = (foldr (\x res -> (getCellsOnMarchDistanc
 getCellsOnMarchDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnMarchDistanceOrLess n b c = clearFromDuplicates (getCellsOnMarchDistanceOrLess' n b c) []
 
+getMarchDistance' :: Int -> Battle -> Cell -> Cell -> Int
+getMarchDistance' n b c1 c2 | (n > (fieldHeight b)) && (n > (fieldWidth b)) = error "Impossible #2"
+                            | any (\x -> position x == position c2) (getCellsOnMarchDistanceOrLess n b c1) = n
+                            | otherwise = getMarchDistance' (n+1) b c1 c2
+
+
 -- get distance with obstacles
-getMarchDistance :: Battle -> Position -> Position -> Int
-getMarchDistance = undefined
+getMarchDistance :: Battle -> Cell -> Cell -> Int
+getMarchDistance b c1 c2 = getMarchDistance' 1 b c1 c2
 
 modifyHexFieldWithCell :: HexField -> Cell -> HexField
 modifyHexFieldWithCell [] _ = error "Impossible #1"
 modifyHexFieldWithCell (x:xs) c | (position x) == (position c) = c:xs
-                                | otherwise = modifyHexFieldWithCell xs c 
+                                | otherwise = x:(modifyHexFieldWithCell xs c)
 
 excludePosition :: [Position] -> Position -> [Position]
 excludePosition [] _ = []
