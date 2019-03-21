@@ -5,6 +5,7 @@ module Draw where
 
 import Graphics.Gloss
 import Battle
+import Squad (Unit, Squad)
 
 -- draw interface outside of battle
 drawMenu :: Picture
@@ -17,6 +18,9 @@ drawUnit = undefined
 -- draw single squad i.e. bunch of units
 drawSquad :: Squad -> Picture
 drawSquad = undefined
+
+drawCell :: Cell -> Picture
+drawCell = undefined
 
 -- draw hexogonal grid
 drawHexField :: Battle -> Picture

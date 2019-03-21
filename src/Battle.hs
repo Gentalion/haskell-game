@@ -7,31 +7,11 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Hex (Position)
 import qualified Hex as Hex
+import Squad
 
-data ModifierType = ModAddWhite | ModAddGreen | ModMultiply deriving Eq
-data Control = Player | EnemyAI | NoControl
 data GameState = Win | Lose | Playing
 type Turn = (Position, Position)
 data TerrainType = TerNothing deriving Eq
-
-data Modifier = Modifier { modName :: String
-                         , modType :: ModifierType
-                         , modValue :: Float
-                         }
-
-data Unit = Unit { name :: String
-                 , basePower :: Float
-                 , mods :: [Modifier]
-                 }
-
-data Squad = Squad { name :: String
-                   , control :: Control
-                   , steps :: Int
-                   , maxMoveDist :: Int
-                   , attackDist :: Int
-                   , members :: [Unit]
-                   , mods :: [Modifier]
-                   }
 
 data Cell = Cell { position :: Position
                  , terrain :: TerrainType
@@ -49,26 +29,6 @@ data Battle = Battle { field :: HexField
                      , selection :: Maybe Position
                      , previousTurns :: [Turn]
                      }
-
--- filter all modifiers with ModifierType equal ModAddWhite and sum them
-allMAW :: [Modifier] -> Float
-allMAW mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddWhite) mods))
-
--- filter all modifiers with ModifierType equal ModAddGreen and sum them
-allMAG :: [Modifier] -> Float
-allMAG mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddGreen) mods))
-
--- filter all modifiers with ModifierType equal ModMultiply and multiply them
-allMM :: [Modifier] -> Float
-allMM mods = foldr (*) 1.0 (map modValue (filter (\cur -> modType cur == ModMultiply) mods))
-
--- calculate unit power with modifiers
-unitRealPower :: Unit -> Float
-unitRealPower Unit{..} = (basePower + (allMAW mods)) * (allMM mods) + (allMAG mods) -- power = (own power + white power) * power multiplier + green power
-
--- calculate squad power
-squadPower :: Squad -> Float
-squadPower = undefined
 
 emptyCell :: Position -> Cell
 emptyCell pos = Cell {position = pos, terrain = TerNothing, squad = Nothing}
