@@ -11,7 +11,7 @@ import Squad
 
 data GameState = Win | Lose | Playing
 type Turn = (Position, Position)
-data TerrainType = TerNothing deriving Eq
+data TerrainType = TerNothing | TerPlain | TerWater
 
 data Cell = Cell { position :: Position
                  , terrain :: TerrainType
@@ -35,7 +35,7 @@ emptyCell pos = Cell {position = pos, terrain = TerNothing, squad = Nothing}
 
 -- generate field with such height and width
 generateHexField :: Int -> Int -> HexField
-generateHexField height width = [emptyCell (x,y) | x <- [0 .. height - 1], y <- [0 .. width - 1]]
+generateHexField height width = [(emptyCell (x,y)) {terrain = TerPlain} | x <- [0 .. height - 1], y <- [0 .. width - 1]]
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
@@ -83,15 +83,32 @@ clearFromDuplicates (x:xs) [] = clearFromDuplicates xs (x:[])
 clearFromDuplicates (x:xs) res | not (foldr (\y res -> res || position x == position y) False res) = clearFromDuplicates xs (x:res)
                                | otherwise = clearFromDuplicates xs res
 
--- get all other cells on distance x
-getCellsOnStraightDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
-getCellsOnStraightDistanceOrLess 1 b c = getNeighbors b c
-getCellsOnStraightDistanceOrLess n b c = clearFromDuplicates (foldr1 (++) (map (getCellsOnStraightDistanceOrLess (n-1) b) (getNeighbors b c))) []
---getCellsOnStraightDistanceOrLess n b c = Set.toList (foldr Set.union (Set.empty) (foldr (\x res -> (Set.fromList (getCellsOnStraightDistanceOrLess (n-1) b x)):res) [] (getNeighbors b c)))
--- check whether terrain is obstacle or there is a squad
-isObstacle :: Cell -> Bool
-isObstacle = undefined
+excludeCell :: [Cell] -> Cell -> [Cell]
+excludeCell [] _ = []
+excludeCell (x:xs) c | (position x) == (position c) = xs
+                     | otherwise = x:(excludeCell xs c)
 
+-- get all other cells on distance x
+getCellsOnStraightDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
+getCellsOnStraightDistanceOrLess' 1 b c = getNeighbors b c
+getCellsOnStraightDistanceOrLess' n b c = foldr1 (++) (map (getCellsOnStraightDistanceOrLess (n-1) b) (getNeighbors b c))
+
+getCellsOnStraightDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
+getCellsOnStraightDistanceOrLess n b c = excludeCell (clearFromDuplicates (getCellsOnStraightDistanceOrLess' n b c) []) c
+
+-- check whether terrain is obstacle or there is a squad
+notObstacle :: Cell -> Bool
+notObstacle c = case (terrain c, squad c) of
+    (_       , Just _) -> False
+    (TerWater,      _) -> False
+    (       _,      _) -> True
+
+getCellsOnMarchDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
+getCellsOnMarchDistanceOrLess' 1 b c = filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)
+getCellsOnMarchDistanceOrLess' n b c = (foldr (\x res -> (getCellsOnMarchDistanceOrLess (n-1) b c)++res) [] (filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)))
+
+getCellsOnMarchDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
+getCellsOnMarchDistanceOrLess n b c = clearFromDuplicates (getCellsOnMarchDistanceOrLess' n b c) []
 
 -- get distance with obstacles
 getMarchDistance :: Battle -> Position -> Position -> Int
@@ -102,10 +119,10 @@ modifyHexFieldWithCell [] _ = error "Impossible #1"
 modifyHexFieldWithCell (x:xs) c | (position x) == (position c) = c:xs
                                 | otherwise = modifyHexFieldWithCell xs c 
 
-excludeCell :: [Position] -> Position -> [Position]
-excludeCell [] _ = []
-excludeCell (x:xs) pos | pos == x = xs
-                       | otherwise = x:(excludeCell xs pos)
+excludePosition :: [Position] -> Position -> [Position]
+excludePosition [] _ = []
+excludePosition (x:xs) pos | pos == x = xs
+                       | otherwise = x:(excludePosition xs pos)
 
 modifyBattleWithCell' :: Battle -> Cell -> [Position] -> [Position] -> Battle
 modifyBattleWithCell' b c newAllies newEnemies = b {field = (modifyHexFieldWithCell (field b) c), allies = newAllies, enemies = newEnemies}
@@ -122,19 +139,26 @@ modifyBattleWithCell b c =
         bAllies = allies b
         bEnemies = enemies b
     in case (prevCellOccup, newCellOccup) of
-        (NoControl, NoControl) -> modifyBattleWithCell' b c              bAllies                   bEnemies
-        (NoControl,    Player) -> modifyBattleWithCell' b c         (pos:bAllies)                  bEnemies
-        (NoControl,   EnemyAI) -> modifyBattleWithCell' b c              bAllies              (pos:bEnemies)
-        (   Player, NoControl) -> modifyBattleWithCell' b c (excludeCell bAllies pos)              bEnemies
-        (   Player,    Player) -> modifyBattleWithCell' b c              bAllies                   bEnemies
-        (   Player,   EnemyAI) -> modifyBattleWithCell' b c (excludeCell bAllies pos)         (pos:bEnemies)
-        (  EnemyAI, NoControl) -> modifyBattleWithCell' b c              bAllies      (excludeCell bEnemies pos)
-        (  EnemyAI,    Player) -> modifyBattleWithCell' b c         (pos:bAllies)     (excludeCell bEnemies pos)
-        (  EnemyAI,   EnemyAI) -> modifyBattleWithCell' b c              bAllies                   bEnemies
+        (NoControl, NoControl) -> modifyBattleWithCell' b c                  bAllies                       bEnemies
+        (NoControl,    Player) -> modifyBattleWithCell' b c             (pos:bAllies)                      bEnemies
+        (NoControl,   EnemyAI) -> modifyBattleWithCell' b c                  bAllies                  (pos:bEnemies)
+        (   Player, NoControl) -> modifyBattleWithCell' b c (excludePosition bAllies pos)                  bEnemies
+        (   Player,    Player) -> modifyBattleWithCell' b c                  bAllies                       bEnemies
+        (   Player,   EnemyAI) -> modifyBattleWithCell' b c (excludePosition bAllies pos)             (pos:bEnemies)
+        (  EnemyAI, NoControl) -> modifyBattleWithCell' b c                  bAllies      (excludePosition bEnemies pos)
+        (  EnemyAI,    Player) -> modifyBattleWithCell' b c             (pos:bAllies)     (excludePosition bEnemies pos)
+        (  EnemyAI,   EnemyAI) -> modifyBattleWithCell' b c                  bAllies                       bEnemies
 
 -- move squad from one position to another
 moveSquad :: Battle -> Position -> Position -> Battle
-moveSquad = undefined
+moveSquad b p1 p2 = 
+    let p1Cell = getCell b p1
+        p2Cell = getCell b p2
+        p1Squad = squad p1Cell
+        p2Squad = squad p2Cell
+        p1ResCell = p1Cell {squad = p2Squad}
+        p2ResCell = p2Cell {squad = p1Squad}
+    in modifyBattleWithCell (modifyBattleWithCell b p1ResCell) p2ResCell
 
 -- turn for enemyAI
 enemyAIturn :: Battle -> Battle
