@@ -105,7 +105,7 @@ notObstacle c = case (terrain c, squad c) of
 
 getCellsOnMarchDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
 getCellsOnMarchDistanceOrLess' 1 b c = filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)
-getCellsOnMarchDistanceOrLess' n b c = (foldr (\x res -> (getCellsOnMarchDistanceOrLess (n-1) b c)++res) [] (filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)))
+getCellsOnMarchDistanceOrLess' n b c = (foldr (\x res -> (getCellsOnMarchDistanceOrLess (n-1) b x)++res) [] (filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)))
 
 getCellsOnMarchDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnMarchDistanceOrLess n b c = clearFromDuplicates (getCellsOnMarchDistanceOrLess' n b c) []
