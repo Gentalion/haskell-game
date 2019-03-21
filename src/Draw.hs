@@ -51,8 +51,7 @@ hexPath size pos =
     in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
 
 drawCell :: Float -> Cell -> Picture
-drawCell size c  | (position c) == (0,4) = pictures ((color white (text "1")):(polygon (hexPath size (position c))):[])
-                 | otherwise = polygon (hexPath size (position c))
+drawCell size c = polygon (hexPath size (position c))
 -- draw hexogonal grid
 drawHexField :: Float -> HexField -> Picture
 drawHexField size field = pictures (map (drawCell size) field)
