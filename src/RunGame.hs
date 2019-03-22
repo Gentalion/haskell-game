@@ -4,7 +4,6 @@
 module RunGame where
 
 import Graphics.Gloss
-import Battle
 import Draw
 
 runGame :: IO ()

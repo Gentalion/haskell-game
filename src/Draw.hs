@@ -8,6 +8,12 @@ import Battle
 import Squad (Unit, Squad)
 import Hex (Position)
 
+windowWidth :: Int
+windowWidth = 1280
+
+windowHeight :: Int
+windowHeight = 960
+
 -- draw interface outside of battle
 drawMenu :: Picture
 drawMenu = undefined
@@ -32,14 +38,14 @@ evenrOffsetToPixel size (col, row)=
     in (x, y)
 
 naturalOffset :: Point -> Point
-naturalOffset (x,y) = (x - 400.0, y - 400.0)
+naturalOffset (x,y) = (x - 300.0, y - 300.0)
 
 hexCenter :: Float -> Position -> Point
-hexCenter = evenrOffsetToPixel
+hexCenter size pos = naturalOffset (evenrOffsetToPixel size pos)
 
 hexPath :: Float -> Position -> [Point]
 hexPath size pos =
-    let center = naturalOffset (hexCenter size pos)
+    let center = hexCenter size pos
         x = fst center
         y = snd center
         topCorner = (x, y - size)
@@ -50,28 +56,51 @@ hexPath size pos =
         botRightCorner = (x + size * (sqrt 3.0) / 2, y + size / 2)
     in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
 
+hexPath' :: Float -> Point -> [Point]
+hexPath' size center =
+    let x = fst center
+        y = snd center
+        topCorner = (x, y - size)
+        topLeftCorner = (x - size * (sqrt 3.0) / 2, y - size / 2)
+        topRightCorner = (x + size * (sqrt 3.0) / 2, y - size / 2)
+        botCorner = (x, y + size)
+        botLeftCorner = (x - size * (sqrt 3.0) / 2, y + size / 2)
+        botRightCorner = (x + size * (sqrt 3.0) / 2, y + size / 2)
+    in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
+
 drawCell :: Float -> Cell -> Picture
-drawCell size c = polygon (hexPath size (position c))
+drawCell size c = pictures ((polygon (hexPath size (position c))):(color white (polygon (hexPath' (size * (1 - hexStroke)) (hexCenter size (position c))))):[])
+
 -- draw hexogonal grid
 drawHexField :: Float -> HexField -> Picture
 drawHexField size field = pictures (map (drawCell size) field)
 
---hexSizeFromWindowSize :: Int -> Int -> Float
---hexSizeFromWindowSize fieldHeight fieldWidth = 
---    let maxHeight = 0.5 * ((fromIntegral windowHeight) / (fromIntegral fieldHeight))
---        maxWidth  = 0.5 * ((fromIntegral windowWidth ) / (fromIntegral fieldWidth ))
---    in  min maxHeight maxWidth
+hexSize :: Int -> Int -> Float
+hexSize _ _ = hexConstSize
+--hexSize = hexSizeFromWindowSize
 
-hexSize :: Float
-hexSize = 200.0
+hexSizeFromWindowSize :: Int -> Int -> Float
+hexSizeFromWindowSize fieldHeight fieldWidth = 
+    let maxHeight = 0.5 * ((fromIntegral windowHeight) / (fromIntegral fieldHeight))
+        maxWidth  = sqrt (1/3) * 0.5 * ((fromIntegral windowWidth ) / (fromIntegral fieldWidth))
+    in  min maxHeight maxWidth
+
+hexConstSize :: Float
+hexConstSize = 100.0
+
+hexStroke :: Float
+hexStroke = 0.02
+
+hexSquadOffset :: Float
+hexSquadOffset = 0.05
 
 -- draw field, all terrain and all squads in it
 drawBattleScene :: Battle -> Picture
-drawBattleScene b = drawHexField hexSize (field b)
+drawBattleScene b = drawHexField (hexSize (fieldHeight b) (fieldWidth b)) (field b)
 
 -- Game display mode.
 window :: Display
-window = FullScreen
+window = InWindow "Game" (windowWidth, windowHeight) (10,10)
 
 -- Background color.
 bgColor :: Color
