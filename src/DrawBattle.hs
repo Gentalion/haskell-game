@@ -8,8 +8,9 @@ import Graphics.Gloss.Geometry.Angle
 import Graphics.Gloss
 import Battle
 import Squad
---import Squad (Unit, Squad(..), Control(..))
+import Const
 import Hex (Position)
+import InteractBattle
 
 windowWidth :: Int
 windowWidth = 1280
@@ -40,8 +41,8 @@ drawSquad hexSize pos squad =
               $ translate' (pos +++ (rotateV (degToRad (rotation squad)) (offsetX, offsetY))) 
               $ circleSolid unitSize | offsetX <- [0, -unitOffset, unitOffset], offsetY <- [0, unitOffset, -unitOffset]])
 
-evenrOffsetToPixel :: Float -> Position -> Point
-evenrOffsetToPixel size (col, row)= 
+evenrToPixel :: Float -> Position -> Point
+evenrToPixel size (col, row) = 
     let x = size * sqrt 3.0 * ((fromIntegral col) - 0.5 * (fromIntegral (mod row 2)))
         y = - size * 3/2 * (fromIntegral row)
     in (x, y)
@@ -50,7 +51,7 @@ naturalOffset :: Point -> Point
 naturalOffset (x,y) = (x - 400.0, y + 250.0)
 
 hexCenter :: Float -> Position -> Point
-hexCenter size pos = naturalOffset (evenrOffsetToPixel size pos)
+hexCenter size pos = naturalOffset (evenrToPixel size pos)
 
 hexPath' :: Float -> Position -> [Point]
 hexPath' size pos =
@@ -93,31 +94,9 @@ drawCell size c =
 drawHexField :: Float -> HexField -> Picture
 drawHexField size field = pictures (map (drawCell size ) field)
 
-hexSize :: Int -> Int -> Float
-hexSize _ _ = hexConstSize
---hexSize = hexSizeFromWindowSize
-
-hexSizeFromWindowSize :: Int -> Int -> Float
-hexSizeFromWindowSize fieldHeight fieldWidth = 
-    let maxHeight = 0.5 * ((fromIntegral windowHeight) / (fromIntegral fieldHeight))
-        maxWidth  = sqrt (1/3) * 0.5 * ((fromIntegral windowWidth ) / (fromIntegral fieldWidth))
-    in  min maxHeight maxWidth
-
-hexConstSize :: Float
-hexConstSize = 100.0
-
-hexStroke :: Float
-hexStroke = 0.03
-
-squadOffset :: Float
-squadOffset = 0.05
-
-unitBetween :: Float
-unitBetween = 0.1
-
 -- draw field, all terrain and all squads in it
 drawBattleScene :: Battle -> Picture
-drawBattleScene b = drawHexField (hexSize (fieldHeight b) (fieldWidth b)) (field b)
+drawBattleScene b = drawHexField hexConstSize (field b)
 
 -- Game display mode.
 window :: Display

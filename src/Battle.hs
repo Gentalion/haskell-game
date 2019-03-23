@@ -172,9 +172,6 @@ moveSquad p1 p2 b =
         ( Just x, Nothing) -> modifyBattleWithCell (p1Cell {squad = p2Squad}) $ modifyBattleWithCell (p2Cell {squad = Just (x {rotation = p1Rot})}) b
         (Nothing,  Just y) -> modifyBattleWithCell (p1Cell {squad = Just (y {rotation = p2Rot})}) $ modifyBattleWithCell (p2Cell {squad = p1Squad}) b
         ( Just x,  Just y) -> error "Impossible #4"
-    --    p1ResCell = p1Cell {squad = p2Squad}
-    --    p2ResCell = p2Cell {squad = p1Squad}
-    --in modifyBattleWithCell (modifyBattleWithCell b p1ResCell) p2ResCell
 
 moveSquad' :: Position -> Position -> Battle -> Battle
 moveSquad' p1 p2 b = moveSquad (p1, 0.0) (p2, 0.0) b
