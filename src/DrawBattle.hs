@@ -12,12 +12,6 @@ import Const
 import Hex (Position)
 import InteractBattle
 
-windowWidth :: Int
-windowWidth = 1280
-
-windowHeight :: Int
-windowHeight = 960
-
 colorSquad :: Squad -> Color
 colorSquad squad | (control squad) == Player = blue
                  | (control squad) == EnemyAI = red
@@ -47,24 +41,8 @@ evenrToPixel size (col, row) =
         y = - size * 3/2 * (fromIntegral row)
     in (x, y)
 
-naturalOffset :: Point -> Point
-naturalOffset (x,y) = (x - 400.0, y + 250.0)
-
 hexCenter :: Float -> Position -> Point
 hexCenter size pos = naturalOffset (evenrToPixel size pos)
-
-hexPath' :: Float -> Position -> [Point]
-hexPath' size pos =
-    let center = hexCenter size pos
-        x = fst center
-        y = snd center
-        topCorner = (x, y - size)
-        topLeftCorner = (x - size * (sqrt 3.0) / 2, y - size / 2)
-        topRightCorner = (x + size * (sqrt 3.0) / 2, y - size / 2)
-        botCorner = (x, y + size)
-        botLeftCorner = (x - size * (sqrt 3.0) / 2, y + size / 2)
-        botRightCorner = (x + size * (sqrt 3.0) / 2, y + size / 2)
-    in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
 
 hexPath :: Float -> Point -> [Point]
 hexPath size center =
@@ -78,25 +56,27 @@ hexPath size center =
         botRightCorner = (x + size * (sqrt 3.0) / 2, y + size / 2)
     in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
 
-drawCell :: Float -> Cell -> Picture
-drawCell size c =
-    let center = hexCenter size (position c)
-    in case (squad c) of
+drawCell :: Float -> Color -> Cell -> Picture
+drawCell size cellColor cell =
+    let center = hexCenter size (position cell)
+    in case (squad cell) of
         (Just squad) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
-                                 :(color white $ polygon (hexPath (size * (1 - hexStroke)) center))
+                                 :(color (mixColors 0.5 0.5 cellColor white) $ polygon (hexPath (size * (1 - hexStroke)) center))
                                  :(drawSquad size center squad)
                                  :[])
         (         _) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
-                                 :(color white $ polygon (hexPath (size * (1 - hexStroke)) center))
+                                 :(color (mixColors 0.5 0.5 cellColor white) $ polygon (hexPath (size * (1 - hexStroke)) center))
                                  :[])
 
 -- draw hexogonal grid
-drawHexField :: Float -> HexField -> Picture
-drawHexField size field = pictures (map (drawCell size ) field)
+drawHexField :: Float -> Color -> [Cell] -> Picture
+drawHexField size color field = pictures (map (drawCell size color) field)
 
 -- draw field, all terrain and all squads in it
 drawBattleScene :: Battle -> Picture
-drawBattleScene b = drawHexField hexConstSize (field b)
+drawBattleScene b = pictures ((drawHexField hexConstSize green $ sortByPositions (possibleMoves b) (field b))
+                             :(drawHexField hexConstSize white $ otherByPositions (possibleMoves b) (field b))
+                             :[])
 
 -- Game display mode.
 window :: Display

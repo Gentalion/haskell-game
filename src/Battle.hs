@@ -100,6 +100,9 @@ getCellsOnStraightDistanceOrLess' n b c = foldr1 (++) $ map (getCellsOnStraightD
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnStraightDistanceOrLess n b c = excludeCell (clearFromDuplicates (getCellsOnStraightDistanceOrLess' n b c) []) c
 
+getPossibleMoves :: Battle -> Cell -> Int -> [Position]
+getPossibleMoves b c n = map position (getCellsOnStraightDistanceOrLess n b c)
+
 -- check whether terrain is obstacle or there is a squad
 notObstacle :: Cell -> Bool
 notObstacle c = case (terrain c, squad c) of
@@ -186,3 +189,9 @@ checkGameState b = case (allies b, enemies b, enemiesRemaining b) of
     ([], _,_) -> Lose
     ( _,[],0) -> Win
     ( _, _,_) -> Playing
+
+sortByPositions :: [Position] -> [Cell] -> [Cell]
+sortByPositions posList cellList = filter (\x -> foldr (\y res -> res || (position x) == y) False posList) cellList
+
+otherByPositions :: [Position] -> [Cell] -> [Cell]
+otherByPositions posList cellList = filter (\x -> foldr (\y res -> res && (position x) /= y) True posList) cellList
