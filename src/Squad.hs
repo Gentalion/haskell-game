@@ -3,6 +3,8 @@
 
 module Squad where
 
+import Hex (Position)
+
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply | ModWound deriving Eq
 data Control = Player | EnemyAI | NoControl deriving Eq
 

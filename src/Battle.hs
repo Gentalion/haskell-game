@@ -10,7 +10,6 @@ import qualified Hex as Hex
 import Squad
 
 data GameState = Win | Lose | Playing
-type Turn = (Position, Position)
 data TerrainType = TerNothing | TerPlain | TerWater
 
 data Cell = Cell { position :: Position
@@ -19,6 +18,10 @@ data Cell = Cell { position :: Position
                  }
 
 type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
+
+type SquadPos = (Position, Float)
+type Step = (SquadPos, SquadPos)
+type Turn = [Step]
 
 data Battle = Battle { field :: HexField
                      , fieldHeight :: Int
@@ -131,11 +134,8 @@ excludePosition [] _ = []
 excludePosition (x:xs) pos | pos == x = xs
                        | otherwise = x:(excludePosition xs pos)
 
-modifyBattleWithCell' :: Battle -> Cell -> [Position] -> [Position] -> Battle
-modifyBattleWithCell' b c newAllies newEnemies = b {field = (modifyHexFieldWithCell (field b) c), allies = newAllies, enemies = newEnemies}
-
-modifyBattleWithCell :: Battle -> Cell -> Battle
-modifyBattleWithCell b c =
+modifyBattleWithCell :: Cell -> Battle -> Battle
+modifyBattleWithCell c b =
     let pos = position c
         prevCellOccup = case (squad (getCell b pos)) of
             (Nothing) -> NoControl
@@ -146,26 +146,38 @@ modifyBattleWithCell b c =
         bAllies = allies b
         bEnemies = enemies b
     in case (prevCellOccup, newCellOccup) of
-        (NoControl, NoControl) -> modifyBattleWithCell' b c                  bAllies                       bEnemies
-        (NoControl,    Player) -> modifyBattleWithCell' b c             (pos:bAllies)                      bEnemies
-        (NoControl,   EnemyAI) -> modifyBattleWithCell' b c                  bAllies                  (pos:bEnemies)
-        (   Player, NoControl) -> modifyBattleWithCell' b c (excludePosition bAllies pos)                  bEnemies
-        (   Player,    Player) -> modifyBattleWithCell' b c                  bAllies                       bEnemies
-        (   Player,   EnemyAI) -> modifyBattleWithCell' b c (excludePosition bAllies pos)             (pos:bEnemies)
-        (  EnemyAI, NoControl) -> modifyBattleWithCell' b c                  bAllies      (excludePosition bEnemies pos)
-        (  EnemyAI,    Player) -> modifyBattleWithCell' b c             (pos:bAllies)     (excludePosition bEnemies pos)
-        (  EnemyAI,   EnemyAI) -> modifyBattleWithCell' b c                  bAllies                       bEnemies
+        (NoControl, NoControl) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = bEnemies                      }
+        (NoControl,    Player) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (pos:bAllies),                 enemies = bEnemies                      }
+        (NoControl,   EnemyAI) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = (pos:bEnemies)                }
+        (   Player, NoControl) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (excludePosition bAllies pos), enemies = bEnemies                      }
+        (   Player,    Player) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = bEnemies                      }
+        (   Player,   EnemyAI) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (excludePosition bAllies pos), enemies = (pos:bEnemies)                }
+        (  EnemyAI, NoControl) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = (excludePosition bEnemies pos)}
+        (  EnemyAI,    Player) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (pos:bAllies),                 enemies = (excludePosition bEnemies pos)}
+        (  EnemyAI,   EnemyAI) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = bEnemies                      }
 
 -- move squad from one position to another
-moveSquad :: Battle -> Position -> Position -> Battle
-moveSquad b p1 p2 = 
-    let p1Cell = getCell b p1
-        p2Cell = getCell b p2
+moveSquad :: SquadPos -> SquadPos -> Battle ->  Battle
+moveSquad p1 p2 b = 
+    let p1Pos = fst p1
+        p2Pos = fst p2
+        p1Rot = snd p1
+        p2Rot = snd p2
+        p1Cell = getCell b p1Pos
+        p2Cell = getCell b p2Pos
         p1Squad = squad p1Cell
         p2Squad = squad p2Cell
-        p1ResCell = p1Cell {squad = p2Squad}
-        p2ResCell = p2Cell {squad = p1Squad}
-    in modifyBattleWithCell (modifyBattleWithCell b p1ResCell) p2ResCell
+    in case (p1Squad, p2Squad) of
+        (Nothing, Nothing) -> error "Impossible #3"
+        ( Just x, Nothing) -> modifyBattleWithCell (p1Cell {squad = p2Squad}) $ modifyBattleWithCell (p2Cell {squad = Just (x {rotation = p1Rot})}) b
+        (Nothing,  Just y) -> modifyBattleWithCell (p1Cell {squad = Just (y {rotation = p2Rot})}) $ modifyBattleWithCell (p2Cell {squad = p1Squad}) b
+        ( Just x,  Just y) -> error "Impossible #4"
+    --    p1ResCell = p1Cell {squad = p2Squad}
+    --    p2ResCell = p2Cell {squad = p1Squad}
+    --in modifyBattleWithCell (modifyBattleWithCell b p1ResCell) p2ResCell
+
+moveSquad' :: Position -> Position -> Battle -> Battle
+moveSquad' p1 p2 b = moveSquad (p1, 0.0) (p2, 0.0) b
 
 -- turn for enemyAI
 enemyAIturn :: Battle -> Battle
