@@ -1,7 +1,7 @@
-name:                project-template
+name:                haskellgame
 version:             0.0.0.0
-author:              "John Doe"
-copyright:           "2019 John Doe"
+author:              "Pavel Yeltsin"
+copyright:           "2019 Pavel Yeltsin"
 
 extra-source-files:
 - README.md
@@ -27,7 +27,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - project-template
+    - haskellgame
 
 tests:
   game-test:
@@ -40,4 +40,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - project-template
+    - haskellgame

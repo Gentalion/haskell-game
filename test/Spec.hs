@@ -1,5 +1,5 @@
 import Battle
-import Draw
+import DrawBattle
 
 --printCellPos :: [Cell] -> IO ()
 --printCellPos cells = print (foldr (\x res -> (position x):res) [] cells)
