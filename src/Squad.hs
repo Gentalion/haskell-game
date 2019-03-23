@@ -4,7 +4,7 @@
 module Squad where
 
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply | ModWound deriving Eq
-data Control = Player | EnemyAI | NoControl
+data Control = Player | EnemyAI | NoControl deriving Eq
 
 data Modifier = Modifier { modName :: String
                          , modType :: ModifierType
@@ -18,27 +18,28 @@ data Unit = Unit { name :: String
 
 data Squad = Squad { name :: String
                    , control :: Control
+                   , rotation :: Float
                    , steps :: Int
                    , maxMoveDist :: Int
                    , attackDist :: Int
-                   , members :: [Unit]
+                   , units :: [Unit]
                    , mods :: [Modifier]
                    }
 
 -- filter all modifiers with ModifierType equal ModAddWhite and sum them
 allMAW :: [Modifier] -> Float
-allMAW mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddWhite) mods))
+allMAW mods = foldr (+) 0.0 $ map modValue $ filter (\cur -> modType cur == ModAddWhite) mods
 
 -- filter all modifiers with ModifierType equal ModAddGreen and sum them
 allMAG :: [Modifier] -> Float
-allMAG mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModAddGreen) mods))
+allMAG mods = foldr (+) 0.0 $ map modValue $ filter (\cur -> modType cur == ModAddGreen) mods
 
 -- filter all modifiers with ModifierType equal ModMultiply and multiply them
 allMM :: [Modifier] -> Float
-allMM mods = foldr (*) 1.0 (map modValue (filter (\cur -> modType cur == ModMultiply) mods))
+allMM mods = foldr (*) 1.0 $ map modValue $ filter (\cur -> modType cur == ModMultiply) mods
 
 allWounds :: [Modifier] -> Float
-allWounds mods = foldr (+) 0.0 (map modValue (filter (\cur -> modType cur == ModWound) mods))
+allWounds mods = foldr (+) 0.0 $ map modValue $ filter (\cur -> modType cur == ModWound) mods
 
 -- calculate unit power with modifiers
 unitRealPower :: Unit -> Float
@@ -46,4 +47,10 @@ unitRealPower Unit{..} = (basePower + (allMAW mods)) * (allMM mods) + (allMAG mo
 
 -- calculate squad power
 squadPower :: Squad -> Float
-squadPower s = (foldr (\x res -> res + (unitRealPower x)) 0.0 (members s)) - (allWounds (mods (s :: Squad)))
+squadPower s = (foldr (\x res -> res + (unitRealPower x)) 0.0 (units s)) - (allWounds $ mods (s :: Squad))
+
+emptyUnit :: Unit
+emptyUnit = Unit {name = "", basePower = 0.0, mods = []}
+
+emptySquad :: Squad
+emptySquad = Squad {name = "", control = NoControl, rotation = 0.0, steps = 0, maxMoveDist = 0, attackDist = 0, units = [], mods = []}

@@ -3,9 +3,12 @@
 
 module DrawBattle where
 
+import Graphics.Gloss.Data.Vector
+import Graphics.Gloss.Geometry.Angle
 import Graphics.Gloss
 import Battle
-import Squad (Unit, Squad)
+import Squad
+--import Squad (Unit, Squad(..), Control(..))
 import Hex (Position)
 
 windowWidth :: Int
@@ -14,28 +17,37 @@ windowWidth = 1280
 windowHeight :: Int
 windowHeight = 960
 
+colorSquad :: Squad -> Color
+colorSquad squad | (control squad) == Player = blue
+                 | (control squad) == EnemyAI = red
+                 | otherwise = black
+
+(+++) :: Point -> Point -> Point
+(+++) pos1 pos2 = (fst pos1 + fst pos2, snd pos1 + snd pos2) 
+
+translate' :: Point -> Picture -> Picture
+translate' pos pic = translate (fst pos) (snd pos) pic
+
 -- draw single squad i.e. bunch of units
-drawSquad :: Float -> Point -> Cell -> Picture
-drawSquad hexSize pos cell = 
+drawSquad :: Float -> Point -> Squad -> Picture
+drawSquad hexSize pos squad = 
     let unitSize = (hexSize * (1 - 2 * (hexStroke + squadOffset + unitBetween))) / 6
         unitOffset = unitSize * 2 + unitBetween * hexSize
         posX = fst pos
         posY = snd pos
-    in pictures [color red $ translate (posX + offsetX) (posY + offsetY) $ circleSolid unitSize | offsetX<- [-unitOffset, 0, unitOffset], offsetY <- [-unitOffset, 0, unitOffset]]
-
---function evenr_offset_to_pixel(hex):
---    var x = size * sqrt(3) * (hex.col - 0.5 * (hex.row&1))
---    var y = size * 3/2 * hex.row
---    return Point(x, y)
+        unitsNum = length (units squad)
+    in pictures (take unitsNum [color (colorSquad squad) 
+              $ translate' (pos +++ (rotateV (degToRad (rotation squad)) (offsetX, offsetY))) 
+              $ circleSolid unitSize | offsetX <- [0, -unitOffset, unitOffset], offsetY <- [0, unitOffset, -unitOffset]])
 
 evenrOffsetToPixel :: Float -> Position -> Point
 evenrOffsetToPixel size (col, row)= 
     let x = size * sqrt 3.0 * ((fromIntegral col) - 0.5 * (fromIntegral (mod row 2)))
-        y = size * 3/2 * (fromIntegral row)
+        y = - size * 3/2 * (fromIntegral row)
     in (x, y)
 
 naturalOffset :: Point -> Point
-naturalOffset (x,y) = (x - 300.0, y - 300.0)
+naturalOffset (x,y) = (x - 400.0, y + 250.0)
 
 hexCenter :: Float -> Position -> Point
 hexCenter size pos = naturalOffset (evenrOffsetToPixel size pos)
@@ -68,10 +80,14 @@ hexPath size center =
 drawCell :: Float -> Cell -> Picture
 drawCell size c =
     let center = hexCenter size (position c)
-    in pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
-                :(color white $ polygon (hexPath (size * (1 - hexStroke)) center))
-                :(drawSquad size center c)
-                :[])
+    in case (squad c) of
+        (Just squad) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
+                                 :(color white $ polygon (hexPath (size * (1 - hexStroke)) center))
+                                 :(drawSquad size center squad)
+                                 :[])
+        (         _) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
+                                 :(color white $ polygon (hexPath (size * (1 - hexStroke)) center))
+                                 :[])
 
 -- draw hexogonal grid
 drawHexField :: Float -> HexField -> Picture
@@ -94,7 +110,7 @@ hexStroke :: Float
 hexStroke = 0.03
 
 squadOffset :: Float
-squadOffset = 0.03
+squadOffset = 0.05
 
 unitBetween :: Float
 unitBetween = 0.1

@@ -51,31 +51,31 @@ getCell :: Battle -> Position -> Cell
 getCell b pos = getCellFromHexField (field b) pos
 
 cellLeft :: Battle -> Cell -> Cell
-cellLeft b c = getCell b (Hex.left (position c))
+cellLeft b c = getCell b $ Hex.left (position c)
 
 cellLeftUp :: Battle -> Cell -> Cell
-cellLeftUp b c = getCell b (Hex.leftUp (position c))
+cellLeftUp b c = getCell b $ Hex.leftUp (position c)
 
 cellLeftDown :: Battle -> Cell -> Cell
-cellLeftDown b c = getCell b (Hex.leftDown (position c))
+cellLeftDown b c = getCell b $ Hex.leftDown (position c)
 
 cellRight :: Battle -> Cell -> Cell
-cellRight b c = getCell b (Hex.right (position c))
+cellRight b c = getCell b $ Hex.right (position c)
 
 cellRightUp :: Battle -> Cell -> Cell
-cellRightUp b c = getCell b (Hex.rightUp (position c))
+cellRightUp b c = getCell b $ Hex.rightUp (position c)
 
 cellRightDown :: Battle -> Cell -> Cell
-cellRightDown b c = getCell b (Hex.rightDown (position c))
+cellRightDown b c = getCell b $ Hex.rightDown (position c)
 
 legitCells :: Battle -> [Cell] -> [Cell]
 legitCells b cells =
     let h = (fieldHeight b) - 1
         w = (fieldWidth  b) - 1
-    in [c | c <- cells, (fst (position c)) >=  0, (fst (position c)) <=  h, (snd (position c)) >=  0, (snd (position c)) <=  w]
+    in [c | c <- cells, (fst $ position c) >=  0, (fst $ position c) <=  h, (snd $ position c) >=  0, (snd $ position c) <=  w]
 
 getNeighbors :: Battle -> Cell -> [Cell]
-getNeighbors b c = legitCells b ((cellLeft b c):(cellLeftUp b c):(cellLeftDown b c):(cellRight b c):(cellRightUp b c):(cellRightDown b c):[])
+getNeighbors b c = legitCells b $ (cellLeft b c):(cellLeftUp b c):(cellLeftDown b c):(cellRight b c):(cellRightUp b c):(cellRightDown b c):[]
 
 -- second [Cell] is used as accumulating parameter
 clearFromDuplicates :: [Cell] -> [Cell] -> [Cell]
@@ -92,7 +92,7 @@ excludeCell (x:xs) c | (position x) == (position c) = xs
 -- get all other cells on distance x
 getCellsOnStraightDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
 getCellsOnStraightDistanceOrLess' 1 b c = getNeighbors b c
-getCellsOnStraightDistanceOrLess' n b c = foldr1 (++) (map (getCellsOnStraightDistanceOrLess (n-1) b) (getNeighbors b c))
+getCellsOnStraightDistanceOrLess' n b c = foldr1 (++) $ map (getCellsOnStraightDistanceOrLess (n-1) b) (getNeighbors b c)
 
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnStraightDistanceOrLess n b c = excludeCell (clearFromDuplicates (getCellsOnStraightDistanceOrLess' n b c) []) c
@@ -106,7 +106,7 @@ notObstacle c = case (terrain c, squad c) of
 
 getCellsOnMarchDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
 getCellsOnMarchDistanceOrLess' 1 b c = filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)
-getCellsOnMarchDistanceOrLess' n b c = (foldr (\x res -> (getCellsOnMarchDistanceOrLess (n-1) b x)++res) [] (filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)))
+getCellsOnMarchDistanceOrLess' n b c = foldr (\x res -> (getCellsOnMarchDistanceOrLess (n-1) b x)++res) [] (filter notObstacle $ getCellsOnStraightDistanceOrLess 1 b c)
 
 getCellsOnMarchDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnMarchDistanceOrLess n b c = clearFromDuplicates (getCellsOnMarchDistanceOrLess' n b c) []
