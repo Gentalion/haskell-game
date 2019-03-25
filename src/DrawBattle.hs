@@ -12,10 +12,17 @@ import Const
 import Hex (Position)
 import InteractBattle
 
+type MixColor = (Color, Float)
+
 colorSquad :: Squad -> Color
 colorSquad squad | (control squad) == Player = blue
                  | (control squad) == EnemyAI = red
                  | otherwise = black
+
+colorCellByTerrain :: Cell -> Color
+colorCellByTerrain cell | (terrain cell) == TerPlain = yellow
+                  | (terrain cell) == TerWater = blue
+                  | otherwise = black
 
 (+++) :: Point -> Point -> Point
 (+++) pos1 pos2 = (fst pos1 + fst pos2, snd pos1 + snd pos2) 
@@ -56,26 +63,27 @@ hexPath size center =
         botRightCorner = (x + size * (sqrt 3.0) / 2, y + size / 2)
     in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
 
-drawCell :: Float -> Color -> Cell -> Picture
+drawCell :: Float -> MixColor -> Cell -> Picture
 drawCell size cellColor cell =
     let center = hexCenter size (position cell)
     in case (squad cell) of
         (Just squad) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
-                                 :(color (mixColors 0.5 0.5 cellColor white) $ polygon (hexPath (size * (1 - hexStroke)) center))
+                                 :(color (mixColors (snd cellColor) 1.0 (fst cellColor) $ colorCellByTerrain cell) $ polygon (hexPath (size * (1 - hexStroke)) center))
                                  :(drawSquad size center squad)
                                  :[])
         (         _) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
-                                 :(color (mixColors 0.5 0.5 cellColor white) $ polygon (hexPath (size * (1 - hexStroke)) center))
+                                 :(color (mixColors (snd cellColor) 1.0 (fst cellColor) $ colorCellByTerrain cell) $ polygon (hexPath (size * (1 - hexStroke)) center))
                                  :[])
 
 -- draw hexogonal grid
-drawHexField :: Float -> Color -> [Cell] -> Picture
+drawHexField :: Float -> MixColor -> [Cell] -> Picture
 drawHexField size color field = pictures (map (drawCell size color) field)
 
 -- draw field, all terrain and all squads in it
 drawBattleScene :: Battle -> Picture
-drawBattleScene b = pictures ((drawHexField hexConstSize green $ sortByPositions (possibleMoves b) (field b))
-                             :(drawHexField hexConstSize white $ otherByPositions (possibleMoves b) (field b))
+drawBattleScene b = pictures ((drawHexField hexConstSize (green,0.5) $ sortByPositions (possibleMoves b) (field b))
+                             :(drawHexField hexConstSize (white,0.5) $ otherByPositions ((maybe (0,0) id $ selection b):(possibleMoves b)) (field b))
+                             :(drawCell hexConstSize (green,2.0) $ getCell b $ maybe (0,0) id $ selection b)
                              :[])
 
 -- Game display mode.
@@ -86,6 +94,8 @@ window = InWindow "Game" (windowWidth, windowHeight) (10,10)
 bgColor :: Color
 bgColor = greyN 0.3
 
+drawGamePicture :: Battle -> IO Picture
+drawGamePicture b = return $ drawBattleScene b
 
 drawGame :: Battle -> IO ()
 drawGame b = display window bgColor (drawBattleScene b) 

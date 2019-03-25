@@ -10,7 +10,7 @@ import qualified Hex as Hex
 import Squad
 
 data GameState = Win | Lose | Playing
-data TerrainType = TerNothing | TerPlain | TerWater
+data TerrainType = TerNothing | TerPlain | TerWater deriving Eq
 
 data Cell = Cell { position :: Position
                  , terrain :: TerrainType
@@ -100,9 +100,6 @@ getCellsOnStraightDistanceOrLess' n b c = foldr1 (++) $ map (getCellsOnStraightD
 getCellsOnStraightDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnStraightDistanceOrLess n b c = excludeCell (clearFromDuplicates (getCellsOnStraightDistanceOrLess' n b c) []) c
 
-getPossibleMoves :: Battle -> Cell -> Int -> [Position]
-getPossibleMoves b c n = map position (getCellsOnStraightDistanceOrLess n b c)
-
 -- check whether terrain is obstacle or there is a squad
 notObstacle :: Cell -> Bool
 notObstacle c = case (terrain c, squad c) of
@@ -122,6 +119,8 @@ getMarchDistance' n b c1 c2 | (n > (fieldHeight b)) && (n > (fieldWidth b)) = er
                             | any (\x -> position x == position c2) (getCellsOnMarchDistanceOrLess n b c1) = n
                             | otherwise = getMarchDistance' (n+1) b c1 c2
 
+getPossibleMoves :: Battle -> Cell -> Int -> [Position]
+getPossibleMoves b c n = map position (getCellsOnMarchDistanceOrLess n b c)
 
 -- get distance with obstacles
 getMarchDistance :: Battle -> Cell -> Cell -> Int
