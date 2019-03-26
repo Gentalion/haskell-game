@@ -9,6 +9,9 @@ import Data.Default
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply | ModWound deriving Eq
 data Control = Player | EnemyAI | NoControl deriving Eq
 
+instance Default Control where
+    def = NoControl
+
 data Modifier = Modifier { modName :: String
                          , modType :: ModifierType
                          , modValue :: Float
@@ -33,7 +36,7 @@ data Squad = Squad { name :: String
                    }
 
 instance Default Squad where
-    def = Squad {name = "", control = NoControl, rotation = 0.0, steps = 0, maxMoveDist = 0, attackDist = 0, units = [], mods = []}
+    def = Squad {name = "", control = def, rotation = 0.0, steps = 0, maxMoveDist = 0, attackDist = 0, units = [], mods = []}
 
 -- filter all modifiers with ModifierType equal ModAddWhite and sum them
 allMAW :: [Modifier] -> Float

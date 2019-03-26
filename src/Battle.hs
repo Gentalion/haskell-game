@@ -13,12 +13,16 @@ import Data.Default
 data GameState = Win | Lose | Playing
 data TerrainType = TerNothing | TerPlain | TerWater deriving Eq
 
+instance Default TerrainType where
+    def = TerNothing
+
 data Cell = Cell { position :: Position
                  , terrain :: TerrainType
                  , squad :: Maybe Squad
                  }
+
 instance Default Cell where
-    def = Cell {position = (-1,-1), terrain = TerNothing, squad = Nothing} 
+    def = Cell {position = (-1,-1), terrain = def, squad = Nothing} 
 
 type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
