@@ -52,7 +52,7 @@ emptyCell pos = Cell {position = pos, terrain = TerNothing, squad = Nothing}
 
 -- generate field with such height and width
 generateHexField :: Int -> Int -> HexField
-generateHexField height width = [(emptyCell (x,y)) {terrain = TerPlain} | x <- [0 .. width - 1], y <- [0 .. height - 1]]
+generateHexField width height = [(emptyCell (x,y)) {terrain = TerPlain} | x <- [0 .. width - 1], y <- [0 .. height - 1]]
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)

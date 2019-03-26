@@ -24,5 +24,11 @@ windowWidth = 1280
 windowHeight :: Int
 windowHeight = 960
 
-naturalOffset :: Point -> Point
-naturalOffset (x,y) = (x - 400.0, y + 250.0)
+hexMaximumInWindowSize :: Int -> Int -> Int -> Int -> Float
+hexMaximumInWindowSize width height inRow inCol = 
+    let hexesMaxWidth = fromIntegral width / ((sqrt 3.0) * ((fromIntegral inRow) + 0.5) + 1)
+        hexesMaxHeight = fromIntegral height / (2 * fromIntegral inCol + 1)
+    in min hexesMaxWidth hexesMaxHeight
+
+naturalOffset :: (Float, Int, Int) -> Point -> Point
+naturalOffset (size, width, height) (x,y) = (x - fromIntegral width / 2 + (sqrt 3.0) * (1 + hexStroke / 2) * size + size / 2, y + fromIntegral height / 2 - (1 + hexStroke) * size - size / 2)

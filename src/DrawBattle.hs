@@ -48,8 +48,8 @@ evenrToPixel size (col, row) =
         y = - size * 3/2 * (fromIntegral row)
     in (x, y)
 
-hexCenter :: Float -> Position -> Point
-hexCenter size pos = naturalOffset (evenrToPixel size pos)
+hexCenter :: (Float, Int, Int) -> Position -> Point
+hexCenter (size, width, height) pos = naturalOffset (size, width, height) (evenrToPixel size pos)
 
 hexPath :: Float -> Point -> [Point]
 hexPath size center =
@@ -63,9 +63,9 @@ hexPath size center =
         botRightCorner = (x + size * (sqrt 3.0) / 2, y + size / 2)
     in (topCorner:topRightCorner:botRightCorner:botCorner:botLeftCorner:topLeftCorner:[])
 
-drawCell :: Float -> MixColor -> Cell -> Picture
-drawCell size cellColor cell =
-    let center = hexCenter size (position cell)
+drawCell :: (Float, Int, Int) -> MixColor -> Cell -> Picture
+drawCell (size, width, height) cellColor cell =
+    let center = hexCenter (size, width, height) (position cell)
     in case (squad cell) of
         (Just squad) -> pictures ((polygon (hexPath (size * (1 + hexStroke)) center))
                                  :(color (mixColors (snd cellColor) 1.0 (fst cellColor) $ colorCellByTerrain cell) $ polygon (hexPath (size * (1 - hexStroke)) center))
@@ -76,15 +76,17 @@ drawCell size cellColor cell =
                                  :[])
 
 -- draw hexogonal grid
-drawHexField :: Float -> MixColor -> [Cell] -> Picture
+drawHexField :: (Float, Int, Int) -> MixColor -> [Cell] -> Picture
 drawHexField size color field = pictures (map (drawCell size color) field)
 
 -- draw field, all terrain and all squads in it
 drawBattleScene :: Battle -> Picture
-drawBattleScene b = pictures ((drawHexField hexConstSize (green,0.5) $ sortByPositions (possibleMoves b) (field b))
-                             :(drawHexField hexConstSize (white,0.5) $ otherByPositions ((maybe (0,0) id $ selection b):(possibleMoves b)) (field b))
-                             :(drawCell hexConstSize (green,2.0) $ getCell b $ maybe (0,0) id $ selection b)
-                             :[])
+drawBattleScene b = 
+    let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
+    in pictures ((drawHexField size (green,0.5) $ sortByPositions (possibleMoves b) (field b))
+                :(drawHexField size (white,0.5) $ otherByPositions ((maybe (0,0) id $ selection b):(possibleMoves b)) (field b))
+                :(drawCell size (green,2.0) $ getCell b $ maybe (0,0) id $ selection b)
+                :[])
 
 -- Game display mode.
 window :: Display
