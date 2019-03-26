@@ -1,6 +1,10 @@
 module Const where
 
 import Graphics.Gloss (Point)
+import Graphics.Gloss.Data.Color
+
+bgColor :: Color
+bgColor = greyN 0.3
 
 hexConstSize :: Float
 hexConstSize = 100.0

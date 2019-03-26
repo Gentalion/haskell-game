@@ -8,6 +8,7 @@ import qualified Data.Set as Set
 import Hex (Position)
 import qualified Hex as Hex
 import Squad
+import Data.Default
 
 data GameState = Win | Lose | Playing
 data TerrainType = TerNothing | TerPlain | TerWater deriving Eq
@@ -16,6 +17,8 @@ data Cell = Cell { position :: Position
                  , terrain :: TerrainType
                  , squad :: Maybe Squad
                  }
+instance Default Cell where
+    def = Cell {position = (-1,-1), terrain = TerNothing, squad = Nothing} 
 
 type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
@@ -33,6 +36,12 @@ data Battle = Battle { field :: HexField
                      , possibleMoves :: [Position]
                      , previousTurns :: [Turn]
                      }
+
+instance Default Battle where
+    def = Battle {field = [], fieldHeight = 0, fieldWidth = 0, allies = [], enemies = [], enemiesRemaining = 0, selection = Nothing, possibleMoves = [], previousTurns = []}
+
+--instance Default Battle where
+--    def = Battle {}
 
 emptyCell :: Position -> Cell
 emptyCell pos = Cell {position = pos, terrain = TerNothing, squad = Nothing}

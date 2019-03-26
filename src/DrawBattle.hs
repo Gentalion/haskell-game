@@ -90,12 +90,11 @@ drawBattleScene b = pictures ((drawHexField hexConstSize (green,0.5) $ sortByPos
 window :: Display
 window = InWindow "Game" (windowWidth, windowHeight) (10,10)
 
--- Background color.
-bgColor :: Color
-bgColor = greyN 0.3
-
-drawGamePicture :: Battle -> IO Picture
-drawGamePicture b = return $ drawBattleScene b
+drawGamePicture :: Battle -> Picture
+drawGamePicture b = drawBattleScene b
 
 drawGame :: Battle -> IO ()
 drawGame b = display window bgColor (drawBattleScene b) 
+
+updateGame :: Float -> Battle -> Battle
+updateGame f b = b
