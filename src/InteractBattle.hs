@@ -18,7 +18,7 @@ pixelToEvenr (size, width, height) (x1,y1) =
 handleInput :: Event -> Battle -> Battle
 handleInput event b = 
     let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
-        hasControl = control $ maybe def id $ squad $ getCell b $ maybe (-2,-2) id $ selection b
+        hasControl = control $ maybe def id $ squad $ maybe def id $ selection b
     in case (event, hasControl) of
         (EventKey (MouseButton LeftButton) Down _ pos, NoControl) -> selectPosition b $ pixelToEvenr size pos
         (                                           _,         _) -> b
@@ -29,5 +29,5 @@ selectPosition b pos@(x,y) =
         isLegitCell = x >= 0 && y >= 0 && x < fieldWidth b && y < fieldHeight b
     in case (isLegitCell, squad cell) of
         (False,  _) -> b
-        (_,Nothing) -> b {selection = Just pos}
-        (_,Just sq) -> b {selection = Just pos, possibleMoves = getPossibleMoves b cell $ steps sq}
+        (_,Nothing) -> b {selection = Just cell}
+        (_,Just sq) -> b {selection = Just cell, possibleMoves = getPossibleMoves b cell $ steps sq}

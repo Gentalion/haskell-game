@@ -24,41 +24,47 @@ data Cell = Cell { position :: Position
 instance Default Cell where
     def = Cell {position = (-1,-1), terrain = def, squad = Nothing} 
 
-type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
+--type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
 type SquadPos = (Position, Float)
 type Step = (SquadPos, SquadPos)
 type Turn = [Step]
 
-data Battle = Battle { field :: HexField
+data Battle = Battle { otherCells :: [Cell]
                      , fieldHeight :: Int
                      , fieldWidth :: Int
-                     , allies :: [Position]
-                     , enemies :: [Position]
+                     , allies :: [Cell]
+                     , enemies :: [Cell]
                      , enemiesRemaining :: Int
-                     , selection :: Maybe Position
-                     , possibleMoves :: [Position]
+                     , selection :: Maybe Cell
+                     , possibleMoves :: [Cell]
                      , previousTurns :: [Turn]
                      }
 
 instance Default Battle where
-    def = Battle {field = [], fieldHeight = 0, fieldWidth = 0, allies = [], enemies = [], enemiesRemaining = 0, selection = Nothing, possibleMoves = [], previousTurns = []}
+    def = Battle {otherCells = [], fieldHeight = 0, fieldWidth = 0, allies = [], enemies = [], enemiesRemaining = 0, selection = Nothing, possibleMoves = [], previousTurns = []}
 
 -- generate field with such height and width
-generateHexField :: Int -> Int -> HexField
+generateHexField :: Int -> Int -> [Cell]
 generateHexField width height = [def {position = (x,y), terrain = TerPlain} | x <- [0 .. width - 1], y <- [0 .. height - 1]]
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
 
 -- get Cell from its position
-getCellFromHexField :: HexField -> Position -> Cell
-getCellFromHexField [] pos = ((def :: Cell) {position = pos})
-getCellFromHexField (x:xs) pos | (pos == position x) = x
-                               | otherwise = getCellFromHexField xs pos
+getCellFromCellCollection :: [Cell] -> Position -> Cell
+getCellFromCellCollection [] pos = ((def :: Cell) {position = pos})
+getCellFromCellCollection (x:xs) pos | (pos == position x) = x
+                               | otherwise = getCellFromCellCollection xs pos
+
+field :: Battle -> [Cell]
+field b = case (selection b) of
+    (Nothing) -> (otherCells b)++(allies b)++(enemies b)
+    ( Just c) -> c:(otherCells b)++(allies b)++(enemies b)++(possibleMoves b)
+
 
 getCell :: Battle -> Position -> Cell
-getCell b pos = getCellFromHexField (field b) pos
+getCell b pos = getCellFromCellCollection (field b) pos
 
 cellLeft :: Battle -> Cell -> Cell
 cellLeft b c = getCell b $ Hex.left (position c)
@@ -126,23 +132,21 @@ getMarchDistance' n b c1 c2 | (n > (fieldHeight b)) && (n > (fieldWidth b)) = er
                             | any (\x -> position x == position c2) (getCellsOnMarchDistanceOrLess n b c1) = n
                             | otherwise = getMarchDistance' (n+1) b c1 c2
 
-getPossibleMoves :: Battle -> Cell -> Int -> [Position]
-getPossibleMoves b c n = map position (getCellsOnMarchDistanceOrLess n b c)
+getPossibleMoves :: Battle -> Cell -> Int -> [Cell]
+getPossibleMoves b@Battle{..} c n =
+    let newField = otherCells++possibleMoves
+    in getCellsOnMarchDistanceOrLess n b c
 
 -- get distance with obstacles
 getMarchDistance :: Battle -> Cell -> Cell -> Int
 getMarchDistance b c1 c2 = getMarchDistance' 1 b c1 c2
 
-modifyHexFieldWithCell :: HexField -> Cell -> HexField
-modifyHexFieldWithCell [] _ = error "Impossible #1"
-modifyHexFieldWithCell (x:xs) c | (position x) == (position c) = c:xs
-                                | otherwise = x:(modifyHexFieldWithCell xs c)
+modifyCellCollection :: [Cell] -> Cell -> [Cell]
+modifyCellCollection [] _ = error "Impossible #1"
+modifyCellCollection (x:xs) c | (position x) == (position c) = c:xs
+                                | otherwise = x:(modifyCellCollection xs c)
 
-excludePosition :: [Position] -> Position -> [Position]
-excludePosition [] _ = []
-excludePosition (x:xs) pos | pos == x = xs
-                       | otherwise = x:(excludePosition xs pos)
-
+-- works correctly for Battle with no selection and empty possibleMoves i.e. for internal calls
 modifyBattleWithCell :: Cell -> Battle -> Battle
 modifyBattleWithCell c b =
     let pos = position c
@@ -152,18 +156,30 @@ modifyBattleWithCell c b =
         newCellOccup = case (squad c) of
             (Nothing) -> NoControl
             (Just ns) -> control ns
-        bAllies = allies b
-        bEnemies = enemies b
     in case (prevCellOccup, newCellOccup) of
-        (NoControl, NoControl) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = bEnemies                      }
-        (NoControl,    Player) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (pos:bAllies),                 enemies = bEnemies                      }
-        (NoControl,   EnemyAI) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = (pos:bEnemies)                }
-        (   Player, NoControl) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (excludePosition bAllies pos), enemies = bEnemies                      }
-        (   Player,    Player) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = bEnemies                      }
-        (   Player,   EnemyAI) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (excludePosition bAllies pos), enemies = (pos:bEnemies)                }
-        (  EnemyAI, NoControl) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = (excludePosition bEnemies pos)}
-        (  EnemyAI,    Player) -> b {field = (modifyHexFieldWithCell (field b) c), allies = (pos:bAllies),                 enemies = (excludePosition bEnemies pos)}
-        (  EnemyAI,   EnemyAI) -> b {field = (modifyHexFieldWithCell (field b) c), allies = bAllies,                       enemies = bEnemies                      }
+        (NoControl, NoControl) -> b {otherCells = modifyCellCollection (otherCells b) c}
+
+        (NoControl,    Player) -> b {otherCells = excludeCell (otherCells b) c
+                                    ,allies = c:(allies b)}
+
+        (NoControl,   EnemyAI) -> b {otherCells = excludeCell (otherCells b) c
+                                    ,enemies = c:(enemies b)}
+
+        (   Player, NoControl) -> b {otherCells = c:(otherCells b)
+                                    ,allies = excludeCell (allies b) c}
+
+        (   Player,    Player) -> b {allies = c:(excludeCell (allies b) c)}
+
+        (   Player,   EnemyAI) -> b {allies = excludeCell (allies b) c
+                                    ,enemies = c:(enemies b)}
+
+        (  EnemyAI, NoControl) -> b {otherCells = c:(otherCells b)
+                                    ,enemies = excludeCell (enemies b) c}
+
+        (  EnemyAI,    Player) -> b {allies = c:(allies b)
+                                    ,enemies = excludeCell (enemies b) c}
+
+        (  EnemyAI,   EnemyAI) -> b {enemies = c:(excludeCell (enemies b) c)}
 
 -- move squad from one position to another
 moveSquad :: SquadPos -> SquadPos -> Battle ->  Battle

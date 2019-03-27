@@ -20,9 +20,9 @@ colorSquad squad | (control squad) == Player = blue
                  | (control squad) == EnemyAI = red
                  | otherwise = black
 
-colorSelection :: Battle -> Maybe Position -> Color
+colorSelection :: Battle -> Maybe Cell -> Color
 colorSelection b Nothing = black
-colorSelection b (Just pos) = case (control $ maybe def id $ squad $ getCell b pos) of 
+colorSelection b (Just cell) = case (control $ maybe def id $ squad cell) of 
     (EnemyAI) -> red
     ( Player) -> green
     (      _) -> greyN 0.5
@@ -84,16 +84,18 @@ drawCell (size, width, height) cellColor cell =
                                  :[])
 
 -- draw hexogonal grid
-drawHexField :: (Float, Int, Int) -> MixColor -> [Cell] -> Picture
-drawHexField size color field = pictures (map (drawCell size color) field)
+drawCellList :: (Float, Int, Int) -> MixColor -> [Cell] -> Picture
+drawCellList size color field = pictures (map (drawCell size color) field)
 
 -- draw field, all terrain and all squads in it
 drawBattleScene :: Battle -> Picture
 drawBattleScene b = 
     let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
-    in pictures ((drawHexField size (colorSelection b $ selection b, 0.5) $ sortByPositions (possibleMoves b) (field b))
-                :(drawHexField size (white,0.5) $ otherByPositions ((maybe (-2,-2) id $ selection b):(possibleMoves b)) (field b))
-                :(drawCell size     (colorSelection b $ selection b, 2.0) $ getCell b $ maybe (-2,-2) id $ selection b)
+    in pictures ((drawCellList size (colorSelection b $ selection b, 0.5) (possibleMoves b))
+                :(drawCellList size (white, 0.0) (otherCells b))
+                :(drawCellList size (white, 0.0) (allies b))
+                :(drawCellList size (white, 0.0) (enemies b))
+                :(drawCell size     (colorSelection b $ selection b, 2.0) $ maybe (def {position = (-2,-2)}) id $ selection b)
                 :[])
 
 -- Game display mode.
