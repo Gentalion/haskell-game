@@ -22,7 +22,7 @@ data Cell = Cell { position :: Position
                  }
 
 instance Default Cell where
-    def = Cell {position = (-1,-1), terrain = def, squad = Nothing} 
+    def = Cell {position = (-2,-2), terrain = def, squad = Nothing} 
 
 --type HexField = [Cell] -- we consider our field to be "even-r" hexagonal grid like it's shown here https://www.redblobgames.com/grids/hexagons/
 
@@ -105,6 +105,11 @@ excludeCell [] _ = []
 excludeCell (x:xs) c | (position x) == (position c) = xs
                      | otherwise = x:(excludeCell xs c)
 
+excludeCells :: [Cell] -> [Cell] -> [Cell]
+excludeCells [] _ = []
+excludeCells x [] = x
+excludeCells x (y:ys) = excludeCells (excludeCell x y) ys
+
 -- get all other cells on distance x
 getCellsOnStraightDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
 getCellsOnStraightDistanceOrLess' 1 b c = getNeighbors b c
@@ -182,7 +187,7 @@ modifyBattleWithCell c b =
         (  EnemyAI,   EnemyAI) -> b {enemies = c:(excludeCell (enemies b) c)}
 
 -- move squad from one position to another
-moveSquad :: SquadPos -> SquadPos -> Battle ->  Battle
+{-moveSquad :: SquadPos -> SquadPos -> Battle ->  Battle
 moveSquad p1 p2 b = 
     let p1Pos = fst p1
         p2Pos = fst p2
@@ -199,7 +204,10 @@ moveSquad p1 p2 b =
         ( Just x,  Just y) -> error "Impossible #4"
 
 moveSquad' :: Position -> Position -> Battle -> Battle
-moveSquad' p1 p2 b = moveSquad (p1, 0.0) (p2, 0.0) b
+moveSquad' p1 p2 b = moveSquad (p1, 0.0) (p2, 0.0) b-}
+
+moveSquad :: Battle -> Cell -> Cell -> Battle
+moveSquad = undefined
 
 -- turn for enemyAI
 enemyAIturn :: Battle -> Battle
@@ -212,8 +220,5 @@ checkGameState b = case (allies b, enemies b, enemiesRemaining b) of
     ( _,[],0) -> Win
     ( _, _,_) -> Playing
 
-sortByPositions :: [Position] -> [Cell] -> [Cell]
-sortByPositions posList cellList = filter (\x -> foldr (\y res -> res || (position x) == y) False posList) cellList
-
-otherByPositions :: [Position] -> [Cell] -> [Cell]
-otherByPositions posList cellList = filter (\x -> foldr (\y res -> res && (position x) /= y) True posList) cellList
+member :: Cell -> [Cell] -> Bool
+member cell cellList = foldr (\y res -> res || (position cell) == (position y)) False cellList
