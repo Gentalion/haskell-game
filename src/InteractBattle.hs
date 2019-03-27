@@ -1,6 +1,6 @@
 module InteractBattle where
 
-import Graphics.Gloss.Interface.IO.Interact
+import Graphics.Gloss.Interface.Pure.Game
 import Battle
 import Squad
 import Const
@@ -36,15 +36,19 @@ selectPosition b (x,y) =
 
 selectCellWithSquad :: Battle -> Cell -> Battle
 selectCellWithSquad b cell = 
-    let posMoves = getPossibleMoves b cell $ steps $ maybe def id $ squad cell
-    in b {selection = Just cell, possibleMoves = posMoves, otherCells = excludeCells (otherCells b) posMoves}
+    let squad_ = maybe def id $ squad cell
+        control_ = control squad_
+        possibleMoves_ = getPossibleMoves b cell $ steps squad_
+    in case (control_) of
+        ( Player) -> b {selection = Just cell, possibleMoves = possibleMoves_, otherCells = excludeCells (otherCells b) possibleMoves_, allies = excludeCell (allies b) cell}
+        (EnemyAI) -> b {selection = Just cell, possibleMoves = possibleMoves_, otherCells = excludeCells (otherCells b) possibleMoves_, enemies = excludeCell (enemies b) cell}
 
 secondClickAfterSelection :: Battle -> Position -> Battle
 secondClickAfterSelection b pos = 
     let cell = getCell b pos
         selected = maybe def id $ selection b
     in case (position cell == position selected, control $ maybe def id $ squad selected, member cell (possibleMoves b)) of
-        (True,      _,    _) -> b {otherCells = selected:(otherCells b)++(possibleMoves b), selection = Nothing, possibleMoves = []}
-        (   _,      _,False) -> selectPosition (b {otherCells = selected:(otherCells b)++(possibleMoves b), selection = Nothing, possibleMoves = []}) pos
+        (True,      _,    _) -> removeSelection b
+        (   _,      _,False) -> selectPosition (removeSelection b) pos
         (   _, Player, True) -> moveSquad b cell selected
         (   _,EnemyAI,    _) -> b

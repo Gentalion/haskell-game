@@ -86,9 +86,9 @@ cellRightDown b c = getCell b $ Hex.rightDown (position c)
 
 legitCells :: Battle -> [Cell] -> [Cell]
 legitCells b cells =
-    let h = (fieldHeight b) - 1
-        w = (fieldWidth  b) - 1
-    in [c | c <- cells, (fst $ position c) >=  0, (fst $ position c) <=  h, (snd $ position c) >=  0, (snd $ position c) <=  w]
+    let h = (fieldHeight b)
+        w = (fieldWidth  b)
+    in [c | c <- cells, (fst $ position c) >=  0, (fst $ position c) <  w, (snd $ position c) >=  0, (snd $ position c) <  h]
 
 getNeighbors :: Battle -> Cell -> [Cell]
 getNeighbors b c = legitCells b $ (cellLeft b c):(cellLeftUp b c):(cellLeftDown b c):(cellRight b c):(cellRightUp b c):(cellRightDown b c):[]
@@ -147,7 +147,7 @@ getMarchDistance :: Battle -> Cell -> Cell -> Int
 getMarchDistance b c1 c2 = getMarchDistance' 1 b c1 c2
 
 modifyCellCollection :: [Cell] -> Cell -> [Cell]
-modifyCellCollection [] _ = error "Impossible #1"
+modifyCellCollection [] c = [c]
 modifyCellCollection (x:xs) c | (position x) == (position c) = c:xs
                                 | otherwise = x:(modifyCellCollection xs c)
 
@@ -173,7 +173,7 @@ modifyBattleWithCell c b =
         (   Player, NoControl) -> b {otherCells = c:(otherCells b)
                                     ,allies = excludeCell (allies b) c}
 
-        (   Player,    Player) -> b {allies = c:(excludeCell (allies b) c)}
+        (   Player,    Player) -> b {allies = modifyCellCollection (allies b) c}
 
         (   Player,   EnemyAI) -> b {allies = excludeCell (allies b) c
                                     ,enemies = c:(enemies b)}
@@ -184,30 +184,29 @@ modifyBattleWithCell c b =
         (  EnemyAI,    Player) -> b {allies = c:(allies b)
                                     ,enemies = excludeCell (enemies b) c}
 
-        (  EnemyAI,   EnemyAI) -> b {enemies = c:(excludeCell (enemies b) c)}
+        (  EnemyAI,   EnemyAI) -> b {enemies = modifyCellCollection (enemies b) c}
 
--- move squad from one position to another
-{-moveSquad :: SquadPos -> SquadPos -> Battle ->  Battle
-moveSquad p1 p2 b = 
-    let p1Pos = fst p1
-        p2Pos = fst p2
-        p1Rot = snd p1
-        p2Rot = snd p2
-        p1Cell = getCell b p1Pos
-        p2Cell = getCell b p2Pos
-        p1Squad = squad p1Cell
-        p2Squad = squad p2Cell
-    in case (p1Squad, p2Squad) of
-        (Nothing, Nothing) -> error "Impossible #3"
-        ( Just x, Nothing) -> modifyBattleWithCell (p1Cell {squad = p2Squad}) $ modifyBattleWithCell (p2Cell {squad = Just (x {rotation = p1Rot})}) b
-        (Nothing,  Just y) -> modifyBattleWithCell (p1Cell {squad = Just (y {rotation = p2Rot})}) $ modifyBattleWithCell (p2Cell {squad = p1Squad}) b
-        ( Just x,  Just y) -> error "Impossible #4"
+removeSelection :: Battle -> Battle
+removeSelection b =
+    let selected = maybe def id $ selection b
+        b' = removeSelection' b
+    in case (control $ maybe def id $ squad selected) of
+        (NoControl) -> b' {otherCells = selected:(otherCells b')}
+        (   Player) -> b' {allies = selected:(allies b')}
+        (  EnemyAI) -> b' {enemies = selected:(enemies b')}
 
-moveSquad' :: Position -> Position -> Battle -> Battle
-moveSquad' p1 p2 b = moveSquad (p1, 0.0) (p2, 0.0) b-}
+removeSelection' :: Battle -> Battle
+removeSelection' b = b {otherCells = (otherCells b)++(possibleMoves b), selection = Nothing, possibleMoves = []}
 
 moveSquad :: Battle -> Cell -> Cell -> Battle
-moveSquad = undefined
+moveSquad b c1 c2 = 
+    let c1Squad = squad c1
+        c2Squad = squad c2
+    in case (c1Squad, c2Squad) of
+        (Nothing, Nothing) -> error "Impossible #3"
+        ( Just x, Nothing) -> modifyBattleWithCell (c1 {squad = Nothing}) $ modifyBattleWithCell (c2 {squad = Just x}) $ removeSelection' b
+        (Nothing,  Just y) -> modifyBattleWithCell (c1 {squad = Just y}) $ modifyBattleWithCell (c2 {squad = Nothing}) $ removeSelection' b
+        ( Just x,  Just y) -> error "Impossible #4"
 
 -- turn for enemyAI
 enemyAIturn :: Battle -> Battle

@@ -1,6 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-
 module DrawBattle where
 
 import Graphics.Gloss.Data.Vector
@@ -24,11 +21,11 @@ colorSelection :: Battle -> Maybe Cell -> Color
 colorSelection b Nothing = black
 colorSelection b (Just cell) = case (control $ maybe def id $ squad cell) of 
     (EnemyAI) -> red
-    ( Player) -> green
+    ( Player) -> blue
     (      _) -> greyN 0.5
 
 colorCellByTerrain :: Cell -> Color
-colorCellByTerrain cell | (terrain cell) == TerPlain = yellow
+colorCellByTerrain cell | (terrain cell) == TerPlain = mixColors 0.5 0.5 white yellow
                   | (terrain cell) == TerWater = blue
                   | otherwise = black
 
@@ -95,7 +92,7 @@ drawBattleScene b =
                 :(drawCellList size (white, 0.0) (otherCells b))
                 :(drawCellList size (white, 0.0) (allies b))
                 :(drawCellList size (white, 0.0) (enemies b))
-                :(drawCell size     (colorSelection b $ selection b, 2.0) $ maybe (def {position = (-2,-2)}) id $ selection b)
+                :(drawCell size     (colorSelection b $ selection b, 2.0) $ maybe def id $ selection b)
                 :[])
 
 -- Game display mode.

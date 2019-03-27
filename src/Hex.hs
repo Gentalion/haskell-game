@@ -1,6 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-
 module Hex where
 
 type Position = (Int, Int) -- first int stands for column, second for row
