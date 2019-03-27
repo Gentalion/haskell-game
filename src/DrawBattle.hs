@@ -11,6 +11,7 @@ import Squad
 import Const
 import Hex (Position)
 import InteractBattle
+import Data.Default
 
 type MixColor = (Color, Float)
 
@@ -18,6 +19,13 @@ colorSquad :: Squad -> Color
 colorSquad squad | (control squad) == Player = blue
                  | (control squad) == EnemyAI = red
                  | otherwise = black
+
+colorSelection :: Battle -> Maybe Position -> Color
+colorSelection b Nothing = black
+colorSelection b (Just pos) = case (control $ maybe def id $ squad $ getCell b pos) of 
+    (EnemyAI) -> red
+    ( Player) -> green
+    (      _) -> greyN 0.5
 
 colorCellByTerrain :: Cell -> Color
 colorCellByTerrain cell | (terrain cell) == TerPlain = yellow
@@ -83,9 +91,9 @@ drawHexField size color field = pictures (map (drawCell size color) field)
 drawBattleScene :: Battle -> Picture
 drawBattleScene b = 
     let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
-    in pictures ((drawHexField size (green,0.5) $ sortByPositions (possibleMoves b) (field b))
-                :(drawHexField size (white,0.5) $ otherByPositions ((maybe (0,0) id $ selection b):(possibleMoves b)) (field b))
-                :(drawCell size (green,2.0) $ getCell b $ maybe (0,0) id $ selection b)
+    in pictures ((drawHexField size (colorSelection b $ selection b, 0.5) $ sortByPositions (possibleMoves b) (field b))
+                :(drawHexField size (white,0.5) $ otherByPositions ((maybe (-2,-2) id $ selection b):(possibleMoves b)) (field b))
+                :(drawCell size     (colorSelection b $ selection b, 2.0) $ getCell b $ maybe (-2,-2) id $ selection b)
                 :[])
 
 -- Game display mode.

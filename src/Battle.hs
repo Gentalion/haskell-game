@@ -44,22 +44,16 @@ data Battle = Battle { field :: HexField
 instance Default Battle where
     def = Battle {field = [], fieldHeight = 0, fieldWidth = 0, allies = [], enemies = [], enemiesRemaining = 0, selection = Nothing, possibleMoves = [], previousTurns = []}
 
---instance Default Battle where
---    def = Battle {}
-
-emptyCell :: Position -> Cell
-emptyCell pos = Cell {position = pos, terrain = TerNothing, squad = Nothing}
-
 -- generate field with such height and width
 generateHexField :: Int -> Int -> HexField
-generateHexField width height = [(emptyCell (x,y)) {terrain = TerPlain} | x <- [0 .. width - 1], y <- [0 .. height - 1]]
+generateHexField width height = [def {position = (x,y), terrain = TerPlain} | x <- [0 .. width - 1], y <- [0 .. height - 1]]
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
 
 -- get Cell from its position
 getCellFromHexField :: HexField -> Position -> Cell
-getCellFromHexField [] pos = emptyCell pos
+getCellFromHexField [] pos = ((def :: Cell) {position = pos})
 getCellFromHexField (x:xs) pos | (pos == position x) = x
                                | otherwise = getCellFromHexField xs pos
 

@@ -10,22 +10,22 @@ left (x, y) = (x - 1, y)
 
 leftUp :: Position -> Position
 leftUp (x, y) | (mod y 2) == 1 = (x - 1, y - 1)
-                 | otherwise      = (x    , y - 1)
+              | otherwise      = (x    , y - 1)
 
 leftDown :: Position -> Position
 leftDown (x, y) | (mod y 2) == 1 = (x - 1, y + 1)
-                   | otherwise      = (x    , y + 1)
+                | otherwise      = (x    , y + 1)
 
 right :: Position -> Position
 right (x, y) = (x + 1, y)
 
 rightUp :: Position -> Position
 rightUp (x, y) | (mod y 2) == 1 = (x    , y - 1)
-                  | otherwise      = (x + 1, y - 1)
+               | otherwise      = (x + 1, y - 1)
 
 rightDown :: Position -> Position
 rightDown (x, y) | (mod y 2) == 1 = (x    , y + 1)
-                    | otherwise      = (x + 1, y + 1)
+                 | otherwise      = (x + 1, y + 1)
 
 -- get distance without obstacles
 getStraightDistance :: Position -> Position -> Int
