@@ -19,11 +19,12 @@ handleInput :: Event -> Battle -> Battle
 handleInput event b = 
     let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
         hasControl = control $ maybe def id $ squad $ maybe def id $ selection b
-    in case (event, hasControl) of
-        (EventKey (MouseButton LeftButton) Down _ pos, NoControl) -> selectPosition b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,    Player) -> secondClickAfterSelection b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,   EnemyAI) -> secondClickAfterSelection b $ pixelToEvenr size pos
-        (                                           _,         _) -> b
+    in case (event, hasControl, movingSquad b) of
+        (                                           _,         _, Just _) -> b
+        (EventKey (MouseButton LeftButton) Down _ pos, NoControl,      _) -> selectPosition b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,    Player,      _) -> secondClickAfterSelection b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,   EnemyAI,      _) -> secondClickAfterSelection b $ pixelToEvenr size pos
+        (                                           _,         _,      _) -> b
 
 selectPosition :: Battle -> Position -> Battle
 selectPosition b (x,y) =

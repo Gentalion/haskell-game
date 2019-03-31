@@ -11,9 +11,9 @@ import Data.Default
 
 main :: IO ()
 main = 
-    let f = generateHexField 9 5
+    let f = generateHexField 9 7
         c = def {position = (1,1), terrain = TerPlain}
-        b = def {otherCells = f, fieldWidth = 9 ,fieldHeight = 5}
+        b = def {otherCells = f, fieldWidth = 9 ,fieldHeight = 7}
         b1 = modifyBattleWithCell (c {position = (1,1), terrain = TerPlain, squad = Just (def {control = Player, rotation = 0.0, units = take 7 $ repeat def})}) b
         b2 = modifyBattleWithCell (c {position = (2,2), terrain = TerPlain, squad = Just (def {control = EnemyAI, rotation = 0.0, units = take 9 $ repeat def})}) b1
         --b3 = b2 {selection = Just $ position c, possibleMoves = (getPossibleMoves b2 c 2)}

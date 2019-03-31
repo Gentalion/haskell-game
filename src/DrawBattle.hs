@@ -30,22 +30,25 @@ colorCellByTerrain cell | (terrain cell) == TerPlain = mixColors 0.5 0.5 white y
                   | otherwise = black
 
 (+++) :: Point -> Point -> Point
-(+++) pos1 pos2 = (fst pos1 + fst pos2, snd pos1 + snd pos2) 
+(+++) (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
 
 translate' :: Point -> Picture -> Picture
 translate' pos pic = translate (fst pos) (snd pos) pic
 
 -- draw single squad i.e. bunch of units
-drawSquad :: Float -> Point -> Squad -> Picture
-drawSquad hexSize pos squad = 
+drawSquad' :: Float -> Point -> Float -> Squad -> Picture
+drawSquad' hexSize pos rotation squad = 
     let unitSize = (hexSize * (1 - 2 * (hexStroke + squadOffset + unitBetween))) / 6
         unitOffset = unitSize * 2 + unitBetween * hexSize
         posX = fst pos
         posY = snd pos
         unitsNum = length (units squad)
     in pictures (take unitsNum [color (colorSquad squad) 
-              $ translate' (pos +++ (rotateV (degToRad (rotation squad)) (offsetX, offsetY))) 
+              $ translate' (pos +++ (rotateV (degToRad rotation) (offsetX, offsetY))) 
               $ circleSolid unitSize | offsetX <- [0, -unitOffset, unitOffset], offsetY <- [0, unitOffset, -unitOffset]])
+
+drawSquad :: Float -> Point -> Squad -> Picture
+drawSquad hexSize pos squad =  drawSquad' hexSize pos (rotation squad) squad
 
 evenrToPixel :: Float -> Position -> Point
 evenrToPixel size (col, row) = 

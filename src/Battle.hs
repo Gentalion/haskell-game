@@ -9,6 +9,7 @@ import Hex (Position)
 import qualified Hex as Hex
 import Squad
 import Data.Default
+import MovingSquad
 
 data GameState = Win | Lose | Playing
 data TerrainType = TerNothing | TerPlain | TerWater deriving Eq
@@ -39,10 +40,21 @@ data Battle = Battle { otherCells :: [Cell]
                      , selection :: Maybe Cell
                      , possibleMoves :: [Cell]
                      , previousTurns :: [Turn]
+                     , movingSquad :: Maybe MovingSquad
                      }
 
 instance Default Battle where
-    def = Battle {otherCells = [], fieldHeight = 0, fieldWidth = 0, allies = [], enemies = [], enemiesRemaining = 0, selection = Nothing, possibleMoves = [], previousTurns = []}
+    def = Battle { otherCells = []
+                 , fieldHeight = 0
+                 , fieldWidth = 0
+                 , allies = []
+                 , enemies = []
+                 , enemiesRemaining = 0
+                 , selection = Nothing
+                 , possibleMoves = []
+                 , previousTurns = []
+                 , movingSquad = Nothing
+                 }
 
 -- generate field with such height and width
 generateHexField :: Int -> Int -> [Cell]
