@@ -258,17 +258,17 @@ nextRouteStep size n pos rot map =
         leftDown = Hex.leftDown pos
         rightUp = Hex.rightUp pos
     in case (filter (\(i,p) -> i == (n-1) && p == left) map) of
-        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size left) rot 180.0)++(nextRouteStep size (n-1) left 180.0 map)
+        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size left) rot 540.0)++(nextRouteStep size (n-1) left 540.0 map)
         (  []) -> case (filter (\(i,p) -> i == (n-1) && p == right) map) of
-            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size right) rot 0.0)++(nextRouteStep size (n-1) right 0.0 map)
+            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size right) rot 360.0)++(nextRouteStep size (n-1) right 360.0 map)
             (  []) -> case (filter (\(i,p) -> i == (n-1) && p == leftUp) map) of
-                (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftUp) rot 120.0)++(nextRouteStep size (n-1) leftUp 120.0 map)
+                (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftUp) rot 480.0)++(nextRouteStep size (n-1) leftUp 480.0 map)
                 (  []) -> case (filter (\(i,p) -> i == (n-1) && p == rightDown) map) of
-                    (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightDown) rot 300.0)++(nextRouteStep size (n-1) rightDown 300.0 map)
+                    (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightDown) rot 660.0)++(nextRouteStep size (n-1) rightDown 660.0 map)
                     (  []) -> case (filter (\(i,p) -> i == (n-1) && p == leftDown) map) of
-                        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftDown) rot 240.0)++(nextRouteStep size (n-1) leftDown 240.0 map)
+                        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftDown) rot 600.0)++(nextRouteStep size (n-1) leftDown 600.0 map)
                         (  []) -> case (filter (\(i,p) -> i == (n-1) && p == rightUp) map) of
-                            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightUp) rot 60.0)++(nextRouteStep size (n-1) rightUp 60.0 map)
+                            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightUp) rot 420.0)++(nextRouteStep size (n-1) rightUp 420.0 map)
                             (  []) -> error $ "Impossible #5 : " ++ show map
 
 -- "reversed" in the name underlines that we seek the pass from second point for optimization

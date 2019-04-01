@@ -44,20 +44,19 @@ animateMovingSquad f ms = case (animation ms, head $ animation ms) of
     ( _,Left  rotation) -> animateRotation f rotation (ms {animation = tail $ animation ms})
     ( _,Right movement) -> animateMovement f movement (ms {animation = tail $ animation ms})
 
-anglePlus :: Float -> Float -> Float
-anglePlus x y | x + y >= 0 = x + y
-              | otherwise = 360.0 + (x + y)
-
-angleComparison :: Float -> Float -> Bool
-angleComparison a b | b > 180.0 = a <= b
-                    | otherwise = a >= b
+angleComparison :: Float -> Float -> Float -> Bool
+angleComparison x1 dx x2 = case (x2 > x1, dx > 0) of
+    ( True,  True) -> x1 + dx >= x2
+    (False, False) -> x1 + dx <= x2
+    ( True, False) -> x1 + dx <= x2 - 360.0
+    (False,  True) -> x1 + dx >= x2 + 360.0
 
 --animateRotation :: Float -> Rotation -> MovingSquad -> MovingSquad
 --animateRotation f rot ms = ms {animation = (Left rot):(animation ms)}
 
 animateRotation :: Float -> Rotation -> MovingSquad -> MovingSquad
-animateRotation f rot@Rotation{..} ms | angleComparison (anglePlus (rotation ms) (f * delta)) tmax = ms {rotation = tmax}
-                                      | otherwise = ms {rotation = anglePlus (rotation ms) (f * delta), animation = (Left rot):(animation ms)}
+animateRotation f rot@Rotation{..} ms | angleComparison (rotation ms) (f * delta) tmax = ms {rotation = tmax}
+                                      | otherwise = ms {rotation = (rotation ms) + (f * delta), animation = (Left rot):(animation ms)}
 
 
 (+++) :: Point -> Point -> Point
