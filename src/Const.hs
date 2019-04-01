@@ -28,8 +28,8 @@ framesPerSecond :: Int
 framesPerSecond = 60
 
 -- how long rotation takes in seconds
-rotationAnimationTime :: Float
-rotationAnimationTime = 0.3
+rotationOn60DegreesAnimationTime :: Float
+rotationOn60DegreesAnimationTime = 1.0
 
 movementAnimationTime :: Float
 movementAnimationTime = 0.5

@@ -15,7 +15,7 @@ main =
     let f = generateHexField 6 5
         c = def {position = (1,1), terrain = TerPlain}
         b = def {otherCells = f, fieldWidth = 6, fieldHeight = 5}
-        b1 = modifyBattleWithCell (c {position = (1,1), terrain = TerPlain, squad = Just (def {control = Player, rotation = 420.0, units = take 7 $ repeat def})}) b
+        b1 = modifyBattleWithCell (c {position = (1,1), terrain = TerPlain, squad = Just (def {control = Player, rotation = 360.0, units = take 7 $ repeat def})}) b
         b2 = modifyBattleWithCell (c {position = (2,2), terrain = TerPlain, squad = Just (def {control = EnemyAI, rotation = 360.0, units = take 9 $ repeat def})}) b1
         b3 = modifyBattleWithCell (c {position = (3,2), terrain = TerPlain, squad = Just (def {control = EnemyAI, rotation = 360.0, units = take 9 $ repeat def})}) b2
         b4 = modifyBattleWithCell (c {position = (3,3), terrain = TerPlain, squad = Just (def {control = EnemyAI, rotation = 360.0, units = take 9 $ repeat def})}) b3

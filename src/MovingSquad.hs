@@ -85,8 +85,8 @@ animateMovement f mov@Movement{..} ms | pointComparison (position ms) (multiplyF
 minimalRotation :: Float -> Float -> Rotation
 minimalRotation angle1 angle2 = 
     case (abs (angle2 - angle1) <= 180.0) of
-        ( True) -> Rotation {tmax = angle2, delta = (angle2 - angle1) / rotationAnimationTime}
-        (False) -> Rotation {tmax = angle2, delta = - (360.0 - angle2 + angle1) / rotationAnimationTime}
+        ( True) -> Rotation {tmax = angle2, delta = signum (angle2 - angle1) * 60.0 / rotationOn60DegreesAnimationTime * 360.0 / fromIntegral framesPerSecond}
+        (False) -> Rotation {tmax = angle2, delta = signum (180.0 - (angle2 - angle1)) * 60.0 / rotationOn60DegreesAnimationTime * 360.0 / fromIntegral framesPerSecond}
 
 generateMovement :: Point -> Point -> Float -> Float -> [Animation]
 generateMovement pos destinationPos rot destinationRot = ((Left $ minimalRotation rot destinationRot)
