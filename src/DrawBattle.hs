@@ -6,9 +6,10 @@ import Graphics.Gloss
 import Battle
 import Squad
 import Const
-import Hex (Position)
+import Hex (Position, evenrToPixel)
 import InteractBattle
 import Data.Default
+import qualified MovingSquad
 
 type MixColor = (Color, Float)
 
@@ -50,12 +51,6 @@ drawSquad' hexSize pos rotation squad =
 drawSquad :: Float -> Point -> Squad -> Picture
 drawSquad hexSize pos squad =  drawSquad' hexSize pos (rotation squad) squad
 
-evenrToPixel :: Float -> Position -> Point
-evenrToPixel size (col, row) = 
-    let x = size * sqrt 3.0 * ((fromIntegral col) - 0.5 * (fromIntegral (mod row 2)))
-        y = - size * 3/2 * (fromIntegral row)
-    in (x, y)
-
 hexCenter :: (Float, Int, Int) -> Position -> Point
 hexCenter (size, width, height) pos = naturalOffset (size, width, height) (evenrToPixel size pos)
 
@@ -88,25 +83,26 @@ drawCellList :: (Float, Int, Int) -> MixColor -> [Cell] -> Picture
 drawCellList size color field = pictures (map (drawCell size color) field)
 
 -- draw field, all terrain and all squads in it
-drawBattleScene :: Battle -> Picture
-drawBattleScene b = 
-    let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
-    in pictures ((drawCellList size (colorSelection b $ selection b, 0.5) (possibleMoves b))
-                :(drawCellList size (white, 0.0) (otherCells b))
-                :(drawCellList size (white, 0.0) (allies b))
-                :(drawCellList size (white, 0.0) (enemies b))
-                :(drawCell size     (colorSelection b $ selection b, 2.0) $ maybe def id $ selection b)
-                :[])
+drawBattle :: Battle -> Picture
+drawBattle b = 
+    let size = hexSize b
+        sizeTuple = (size, windowWidth, windowHeight)
+    in case (movingSquad b) of
+    (Nothing) -> pictures ((drawCellList sizeTuple (colorSelection b $ selection b, 0.5) (possibleMoves b))
+                          :(drawCellList sizeTuple (white, 0.0) (otherCells b))
+                          :(drawCellList sizeTuple (white, 0.0) (allies b))
+                          :(drawCellList sizeTuple (white, 0.0) (enemies b))
+                          :(drawCell     sizeTuple (colorSelection b $ selection b, 2.0) $ maybe def id $ selection b)
+                          :[])
+    (Just ms) -> pictures ((drawCellList sizeTuple (white, 0.0) (otherCells b))
+                          :(drawCellList sizeTuple (white, 0.0) (allies b))
+                          :(drawCellList sizeTuple (white, 0.0) (enemies b))
+                          :(drawSquad'   size (naturalOffset sizeTuple $ MovingSquad.position ms) (MovingSquad.rotation ms) (MovingSquad.squad ms))
+                          :[])
 
 -- Game display mode.
 window :: Display
 window = InWindow "Game" (windowWidth, windowHeight) (10,10)
 
-drawGamePicture :: Battle -> Picture
-drawGamePicture b = drawBattleScene b
-
-drawGame :: Battle -> IO ()
-drawGame b = display window bgColor (drawBattleScene b) 
-
-updateGame :: Float -> Battle -> Battle
-updateGame f b = b
+--drawGame :: Battle -> IO ()
+--drawGame b = display window bgColor (drawBattle b) 

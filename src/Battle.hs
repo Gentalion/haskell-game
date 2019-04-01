@@ -3,13 +3,14 @@
 
 module Battle where
 
-import Data.Set (Set)
-import qualified Data.Set as Set
 import Hex (Position)
-import qualified Hex as Hex
+import qualified Hex
 import Squad
 import Data.Default
-import MovingSquad
+import MovingSquad hiding (squad,rotation,position,animation)
+import qualified MovingSquad (squad,rotation,position,animation)
+import Graphics.Gloss (Point)
+import Const
 
 data GameState = Win | Lose | Playing
 data TerrainType = TerNothing | TerPlain | TerWater deriving Eq
@@ -138,15 +139,18 @@ notObstacle c = case (terrain c, squad c) of
     (       _,      _) -> True
 
 getCellsOnMarchDistanceOrLess' :: Int -> Battle -> Cell -> [Cell]
-getCellsOnMarchDistanceOrLess' 1 b c = filter notObstacle (getCellsOnStraightDistanceOrLess 1 b c)
-getCellsOnMarchDistanceOrLess' n b c = foldr (\x res -> (getCellsOnMarchDistanceOrLess (n-1) b x)++res) [] (filter notObstacle $ getCellsOnStraightDistanceOrLess 1 b c)
+getCellsOnMarchDistanceOrLess' 1 b c = filter notObstacle (getCellsOnStraightDistanceOrLess' 1 b c)
+getCellsOnMarchDistanceOrLess' n b c = foldr (\x res -> (getCellsOnMarchDistanceOrLess' (n-1) b x)++res) [] (filter notObstacle $ getCellsOnStraightDistanceOrLess 1 b c)
 
 getCellsOnMarchDistanceOrLess :: Int -> Battle -> Cell -> [Cell]
 getCellsOnMarchDistanceOrLess n b c = clearFromDuplicates (getCellsOnMarchDistanceOrLess' n b c) []
 
+outCell :: Cell -> String
+outCell c = "("++show (fst $ position c)++","++show (snd $ position c)++") "
+
 getMarchDistance' :: Int -> Battle -> Cell -> Cell -> Int
-getMarchDistance' n b c1 c2 | (n > (fieldHeight b)) && (n > (fieldWidth b)) = error "Impossible #2"
-                            | any (\x -> position x == position c2) (getCellsOnMarchDistanceOrLess n b c1) = n
+getMarchDistance' n b c1 c2 | (n > (fieldHeight b)) && (n > (fieldWidth b)) = error $ "Impossible #2 : " ++ outCell c1 ++ outCell c2
+                            | any (\x -> position x == position c1) (getCellsOnMarchDistanceOrLess n b c2) = n
                             | otherwise = getMarchDistance' (n+1) b c1 c2
 
 getPossibleMoves :: Battle -> Cell -> Int -> [Cell]
@@ -161,7 +165,7 @@ getMarchDistance b c1 c2 = getMarchDistance' 1 b c1 c2
 modifyCellCollection :: [Cell] -> Cell -> [Cell]
 modifyCellCollection [] c = [c]
 modifyCellCollection (x:xs) c | (position x) == (position c) = c:xs
-                                | otherwise = x:(modifyCellCollection xs c)
+                              | otherwise = x:(modifyCellCollection xs c)
 
 -- works correctly for Battle with no selection and empty possibleMoves i.e. for internal calls
 modifyBattleWithCell :: Cell -> Battle -> Battle
@@ -220,6 +224,75 @@ moveSquad b c1 c2 =
         (Nothing,  Just y) -> modifyBattleWithCell (c1 {squad = Just y}) $ modifyBattleWithCell (c2 {squad = Nothing}) $ removeSelection' b
         ( Just x,  Just y) -> error "Impossible #4"
 
+buildMarchDistanceMap'' :: Int -> Int -> Battle -> (Int,Cell) -> [(Int, Cell)]
+buildMarchDistanceMap'' 1 index b (i,c) = (i,c) : [(index, x) | x <- filter notObstacle (getCellsOnStraightDistanceOrLess' 1 b c)]
+buildMarchDistanceMap'' n index b (i,c) = foldr (\(i, c) res -> (buildMarchDistanceMap'' (n-1) (index+1) b (i,c))++res) 
+                                           [] 
+                                           (buildMarchDistanceMap'' 1 index b (i,c))
+
+buildMarchDistanceMap' :: Int -> Battle -> Cell -> [(Int, Position)]
+buildMarchDistanceMap' n b c = map (\(i,c) -> (i, position c)) $ buildMarchDistanceMap'' n 1 b (0,c)
+
+leaveLessSingle :: (Int, Position) -> [(Int, Position)] -> [(Int, Position)]
+leaveLessSingle x [] = [x]
+leaveLessSingle (xi,xp) ((yi,yp):ys) =
+    case (xp == yp, xi >= yi) of
+        (False,    _) -> (yi,yp):(leaveLessSingle (xi,xp) ys)
+        (True,  True) -> (yi,yp):ys
+        (True, False) -> (xi,xp):ys
+
+leaveLess :: [(Int, Position)] -> [(Int, Position)] -> [(Int, Position)]
+leaveLess [] ys = ys
+leaveLess (x:xs) ys = leaveLess xs (leaveLessSingle x ys)
+
+buildMarchDistanceMap :: Int -> Battle -> Cell -> [(Int, Position)]
+buildMarchDistanceMap n b c = leaveLess (buildMarchDistanceMap' n b c) []
+
+nextRouteStep :: Float -> Int -> Position -> Float -> [(Int, Position)] -> [Animation]
+nextRouteStep _ 0 _ _ _ = []
+nextRouteStep size n pos rot map = 
+    let left = Hex.left pos
+        right = Hex.right pos
+        leftUp = Hex.leftUp pos
+        rightDown = Hex.rightDown pos
+        leftDown = Hex.leftDown pos
+        rightUp = Hex.rightUp pos
+    in case (filter (\(i,p) -> i == (n-1) && p == left) map) of
+        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size left) rot 180.0)++(nextRouteStep size (n-1) left 180.0 map)
+        (  []) -> case (filter (\(i,p) -> i == (n-1) && p == right) map) of
+            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size right) rot 0.0)++(nextRouteStep size (n-1) right 0.0 map)
+            (  []) -> case (filter (\(i,p) -> i == (n-1) && p == leftUp) map) of
+                (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftUp) rot 120.0)++(nextRouteStep size (n-1) leftUp 120.0 map)
+                (  []) -> case (filter (\(i,p) -> i == (n-1) && p == rightDown) map) of
+                    (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightDown) rot 300.0)++(nextRouteStep size (n-1) rightDown 300.0 map)
+                    (  []) -> case (filter (\(i,p) -> i == (n-1) && p == leftDown) map) of
+                        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftDown) rot 240.0)++(nextRouteStep size (n-1) leftDown 240.0 map)
+                        (  []) -> case (filter (\(i,p) -> i == (n-1) && p == rightUp) map) of
+                            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightUp) rot 60.0)++(nextRouteStep size (n-1) rightUp 60.0 map)
+                            (  []) -> error $ "Impossible #5 : " ++ show map
+
+-- "reversed" in the name underlines that we seek the pass from second point for optimization
+buildRouteReversed :: Battle -> Float -> Cell -> Float -> Cell -> [Animation]
+buildRouteReversed b size c1 rot c2 =
+    let dist = getMarchDistance b c1 c2
+        map = buildMarchDistanceMap dist b c2
+    in nextRouteStep size dist (position c1) rot (buildMarchDistanceMap dist b c2)
+
+-- !!!previously selected cell should be here as c1
+moveSquadAnimated :: Battle -> Float -> Cell -> Cell -> Battle
+moveSquadAnimated b size c1 c2 =
+    let c1Squad = maybe def id $ squad c1
+        rot = rotation c1Squad
+        b1 = (removeSelection' b)
+    in b1 { otherCells = (c1 {squad = Nothing}):(otherCells b1) 
+          , movingSquad = Just def { MovingSquad.squad = c1Squad
+                                   , MovingSquad.rotation = rot
+                                   , MovingSquad.position = Hex.evenrToPixel size $ position c1
+                                   , MovingSquad.animation = buildRouteReversed b1 size c1 rot c2
+                                   , MovingSquad.destination = position c2
+                                   }
+          }
+
 -- turn for enemyAI
 enemyAIturn :: Battle -> Battle
 enemyAIturn = undefined
@@ -231,5 +304,11 @@ checkGameState b = case (allies b, enemies b, enemiesRemaining b) of
     ( _,[],0) -> Win
     ( _, _,_) -> Playing
 
+member' :: Position -> [Position] -> Bool
+member' pos posList = foldr (\y res -> res || pos == y) False posList
+
 member :: Cell -> [Cell] -> Bool
-member cell cellList = foldr (\y res -> res || (position cell) == (position y)) False cellList
+member cell cellList = member' (position cell) $ map position cellList
+
+hexSize :: Battle -> Float
+hexSize b = hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b)

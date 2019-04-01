@@ -24,6 +24,16 @@ windowWidth = 1280
 windowHeight :: Int
 windowHeight = 960
 
+framesPerSecond :: Int
+framesPerSecond = 60
+
+-- how long rotation takes in seconds
+rotationAnimationTime :: Float
+rotationAnimationTime = 0.3
+
+movementAnimationTime :: Float
+movementAnimationTime = 0.5
+
 hexMaximumInWindowSize :: Int -> Int -> Int -> Int -> Float
 hexMaximumInWindowSize width height inRow inCol = 
     let hexesMaxWidth = fromIntegral width / ((sqrt 3.0) * ((fromIntegral inRow) + 0.5) + 1)

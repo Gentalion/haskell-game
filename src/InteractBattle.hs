@@ -51,5 +51,5 @@ secondClickAfterSelection b pos =
     in case (position cell == position selected, control $ maybe def id $ squad selected, member cell (possibleMoves b)) of
         (True,      _,    _) -> removeSelection b
         (   _,      _,False) -> selectPosition (removeSelection b) pos
-        (   _, Player, True) -> moveSquad b cell selected
+        (   _, Player, True) -> moveSquadAnimated b (hexSize b) selected cell
         (   _,EnemyAI,    _) -> b

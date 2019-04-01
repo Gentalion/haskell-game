@@ -36,3 +36,9 @@ getStraightDistance (x1,y1) (x2,y2) =
         (_,_,-1,-1) -> 1 + getStraightDistance (rightDown (x1,y1)) (x2,y2)
         (_,_,-1, 1) -> 1 + getStraightDistance (rightUp   (x1,y1)) (x2,y2)
         (_,_, 1,-1) -> 1 + getStraightDistance (leftDown  (x1,y1)) (x2,y2)
+
+evenrToPixel :: Float -> Position -> (Float, Float)
+evenrToPixel size (col, row) = 
+    let x = size * sqrt 3.0 * ((fromIntegral col) - 0.5 * (fromIntegral (mod row 2)))
+        y = - size * 3/2 * (fromIntegral row)
+    in (x, y)
