@@ -6,9 +6,7 @@ module MovingSquad ( animateMovingSquad
                    , Rotation
                    , Movement
                    , Animation
-                   , generateMovement
-                   , getSmth
-                   , getSmth') where
+                   , generateMovement) where
 
 import Squad (Squad)
 import qualified Squad as Squad
@@ -89,16 +87,8 @@ minimalRotation angle1 angle2 =
         (False) -> Rotation {tmax = angle2, delta = signum (180.0 - (angle2 - angle1)) * 60.0 / rotationOn60DegreesAnimationTime * 360.0 / fromIntegral framesPerSecond}
 
 generateMovement :: Point -> Point -> Float -> Float -> [Animation]
-generateMovement pos destinationPos rot destinationRot = ((Left $ minimalRotation rot destinationRot)
-                                                :(Right $ Movement {tmax = destinationPos, delta = deltaPoint pos destinationPos $ movementAnimationTime})
-                                                :[])
-
-getSmth :: [Animation] -> String
-getSmth [] = ""
-getSmth ((Left x):xs) = show $ (tmax :: Rotation -> Float) x
-getSmth ((Right x):xs) = show $ (tmax :: Movement -> Point) x
-
-getSmth' :: MovingSquad -> [Animation] -> String
-getSmth' ms [] = ""
-getSmth' ms ((Left x):xs) = show $ (delta :: Rotation -> Float) x
-getSmth' ms ((Right x):xs) = show $ (position ms)+++((delta :: Movement -> Point) x)
+generateMovement pos destinationPos rot destinationRot | rot /= destinationRot = ((Left $ minimalRotation rot destinationRot)
+                                                                                 :(Right $ Movement {tmax = destinationPos, delta = deltaPoint pos destinationPos $ movementAnimationTime})
+                                                                                 :[])
+                                                       | otherwise = ((Right $ Movement {tmax = destinationPos, delta = deltaPoint pos destinationPos $ movementAnimationTime})
+                                                                     :[])
