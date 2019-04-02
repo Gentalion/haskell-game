@@ -89,7 +89,7 @@ removeSelection b =
     in case (control $ maybe def id $ squad selected) of
         (NoControl) -> b' {otherCells = selected:(otherCells b')}
         (   Player) -> b' {allies = selected:(allies b')}
-        (  EnemyAI) -> b' {enemies = selected:(enemies b')}
+        (    Enemy) -> b' {enemies = selected:(enemies b')}
 
 removeSelection' :: Battle -> Battle
 removeSelection' b = b {otherCells = (otherCells b)++(possibleMoves b), selection = Nothing, possibleMoves = []}
@@ -172,10 +172,6 @@ moveSquadAnimated b size c1 c2 =
                                    , MovingSquad.destination = position c2
                                    }
           }
-
--- turn for enemyAI
-enemyAIturn :: Battle -> Battle
-enemyAIturn = undefined
 
 -- check whether player won, lost or is still playing
 checkGameState :: Battle -> GameState

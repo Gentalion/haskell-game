@@ -7,7 +7,7 @@ import Hex (Position)
 import Data.Default
 
 data ModifierType = ModAddWhite | ModAddGreen | ModMultiply | ModWound deriving Eq
-data Control = Player | EnemyAI | NoControl deriving Eq
+data Control = Player | Enemy | NoControl deriving Eq
 
 instance Default Control where
     def = NoControl

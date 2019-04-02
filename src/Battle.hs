@@ -107,7 +107,7 @@ modifyBattleWithCell c b =
         (NoControl,    Player) -> b {otherCells = excludeCell (otherCells b) c
                                     ,allies = c:(allies b)}
 
-        (NoControl,   EnemyAI) -> b {otherCells = excludeCell (otherCells b) c
+        (NoControl,   Enemy) -> b {otherCells = excludeCell (otherCells b) c
                                     ,enemies = c:(enemies b)}
 
         (   Player, NoControl) -> b {otherCells = c:(otherCells b)
@@ -115,13 +115,13 @@ modifyBattleWithCell c b =
 
         (   Player,    Player) -> b {allies = modifyCellCollection (allies b) c}
 
-        (   Player,   EnemyAI) -> b {allies = excludeCell (allies b) c
+        (   Player,   Enemy) -> b {allies = excludeCell (allies b) c
                                     ,enemies = c:(enemies b)}
 
-        (  EnemyAI, NoControl) -> b {otherCells = c:(otherCells b)
+        (  Enemy, NoControl) -> b {otherCells = c:(otherCells b)
                                     ,enemies = excludeCell (enemies b) c}
 
-        (  EnemyAI,    Player) -> b {allies = c:(allies b)
+        (  Enemy,    Player) -> b {allies = c:(allies b)
                                     ,enemies = excludeCell (enemies b) c}
 
-        (  EnemyAI,   EnemyAI) -> b {enemies = modifyCellCollection (enemies b) c}
+        (  Enemy,   Enemy) -> b {enemies = modifyCellCollection (enemies b) c}

@@ -26,7 +26,7 @@ handleInput event b =
         (EventKey ( SpecialKey     KeyEsc) Down _ pos,         _,      _) -> exitSuccess
         (EventKey (MouseButton LeftButton) Down _ pos, NoControl,      _) -> return $ selectPosition b $ pixelToEvenr size pos
         (EventKey (MouseButton LeftButton) Down _ pos,    Player,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,   EnemyAI,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,     Enemy,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
         (                                           _,         _,      _) -> return $ b
 
 selectPosition :: Battle -> Position -> Battle
@@ -44,15 +44,15 @@ selectCellWithSquad b cell =
         control_ = control squad_
         possibleMoves_ = getPossibleMoves b cell $ steps squad_
     in case (control_) of
-        ( Player) -> b {selection = Just cell, possibleMoves = possibleMoves_, otherCells = excludeCells (otherCells b) possibleMoves_, allies = excludeCell (allies b) cell}
-        (EnemyAI) -> b {selection = Just cell, possibleMoves = possibleMoves_, otherCells = excludeCells (otherCells b) possibleMoves_, enemies = excludeCell (enemies b) cell}
+        (Player) -> b {selection = Just cell, possibleMoves = possibleMoves_, otherCells = excludeCells (otherCells b) possibleMoves_, allies = excludeCell (allies b) cell}
+        ( Enemy) -> b {selection = Just cell, possibleMoves = possibleMoves_, otherCells = excludeCells (otherCells b) possibleMoves_, enemies = excludeCell (enemies b) cell}
 
 secondClickAfterSelection :: Battle -> Position -> Battle
 secondClickAfterSelection b pos = 
     let cell = getCell b pos
         selected = maybe def id $ selection b
     in case (position cell == position selected, control $ maybe def id $ squad selected, member cell (possibleMoves b)) of
-        (True,      _,    _) -> removeSelection b
-        (   _,      _,False) -> selectPosition (removeSelection b) pos
-        (   _, Player, True) -> moveSquadAnimated b (hexSize b) selected cell
-        (   _,EnemyAI,    _) -> b
+        (True,     _,    _) -> removeSelection b
+        (   _,     _,False) -> selectPosition (removeSelection b) pos
+        (   _,Player, True) -> moveSquadAnimated b (hexSize b) selected cell
+        (   _, Enemy,    _) -> b

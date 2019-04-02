@@ -15,15 +15,15 @@ type MixColor = (Color, Float)
 
 colorSquad :: Squad -> Color
 colorSquad squad | (control squad) == Player = blue
-                 | (control squad) == EnemyAI = red
+                 | (control squad) == Enemy = red
                  | otherwise = black
 
 colorSelection :: Battle -> Maybe Cell -> Color
 colorSelection b Nothing = black
 colorSelection b (Just cell) = case (control $ maybe def id $ squad cell) of 
-    (EnemyAI) -> red
-    ( Player) -> blue
-    (      _) -> greyN 0.5
+    ( Enemy) -> red
+    (Player) -> blue
+    (     _) -> greyN 0.5
 
 colorCellByTerrain :: Cell -> Color
 colorCellByTerrain cell | (terrain cell) == TerPlain = mixColors 0.5 0.5 white yellow
