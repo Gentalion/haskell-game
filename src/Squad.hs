@@ -60,3 +60,6 @@ unitRealPower Unit{..} = (basePower + (allMAW mods)) * (allMM mods) + (allMAG mo
 -- calculate squad power
 squadPower :: Squad -> Float
 squadPower s = (foldr (\x res -> res + (unitRealPower x)) 0.0 (units s)) - (allWounds $ mods (s :: Squad))
+
+attackFixed :: Float -> Float -> Float -> Float -> Modifier
+attackFixed attackerPower defenderPower apk dpk = Modifier {modName = "", modType = ModWound, modValue = attackerPower * apk + defenderPower * dpk}

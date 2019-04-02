@@ -83,25 +83,21 @@ drawCellList :: (Float, Int, Int) -> MixColor -> [Cell] -> Picture
 drawCellList size color field = pictures (map (drawCell size color) field)
 
 -- draw field, all terrain and all squads in it
-drawBattle :: Battle -> Picture
+drawBattle :: Battle -> IO Picture
 drawBattle b = 
     let size = hexSize b
         sizeTuple = (size, windowWidth, windowHeight)
     in case (movingSquad b) of
-    (Nothing) -> pictures ((drawCellList sizeTuple (colorSelection b $ selection b, 0.5) (possibleMoves b))
+    (Nothing) -> return $ pictures ((drawCellList sizeTuple (colorSelection b $ selection b, 0.5) (possibleMoves b))
                           :(drawCellList sizeTuple (white, 0.0) (otherCells b))
                           :(drawCellList sizeTuple (white, 0.0) (allies b))
                           :(drawCellList sizeTuple (white, 0.0) (enemies b))
                           :(drawCell     sizeTuple (colorSelection b $ selection b, 2.0) $ maybe def id $ selection b)
                           :[])
-    (Just ms) -> pictures ((drawCellList sizeTuple (white, 0.0) (otherCells b))
+    (Just ms) -> return $ pictures ((drawCellList sizeTuple (white, 0.0) (otherCells b))
                           :(drawCellList sizeTuple (white, 0.0) (allies b))
                           :(drawCellList sizeTuple (white, 0.0) (enemies b))
                           :(drawSquad'   size (naturalOffset sizeTuple $ MovingSquad.position ms) (MovingSquad.rotation ms) (MovingSquad.squad ms))
-                          :(translate (-200.0) 0.0 $ text $ show $ length $ MovingSquad.animation ms)
-                          :(text $ show $ MovingSquad.rotation ms)
-                          :(translate (-500.0) 200.0 $ text $ MovingSquad.getSmth $ MovingSquad.animation ms)
-                          :(translate (-500.0) (-300.0) $ text $ MovingSquad.getSmth' ms $ MovingSquad.animation ms)
                           :[])
 
 -- Game display mode.

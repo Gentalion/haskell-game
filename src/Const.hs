@@ -42,3 +42,9 @@ hexMaximumInWindowSize width height inRow inCol =
 
 naturalOffset :: (Float, Int, Int) -> Point -> Point
 naturalOffset (size, width, height) (x,y) = (x - fromIntegral width / 2 + (sqrt 3.0) * (1 + hexStroke / 2) * size + size / 2, y + fromIntegral height / 2 - (1 + hexStroke) * size - size / 2)
+
+maxDamageFromAttackerPower :: Float
+maxDamageFromAttackerPower = 0.25
+
+maxDamageFromDefenderPower :: Float
+maxDamageFromDefenderPower = 0.1

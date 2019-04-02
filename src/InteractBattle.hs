@@ -6,6 +6,8 @@ import Squad
 import Const
 import Hex (Position)
 import Data.Default
+import System.Exit
+import Distances
 
 pixelToEvenr :: (Float, Int, Int) -> Point -> Position
 pixelToEvenr (size, width, height) (x1,y1) =
@@ -15,16 +17,17 @@ pixelToEvenr (size, width, height) (x1,y1) =
         col = round ((x + 0.5 * (fromIntegral (mod row 2)) * size * sqrt 3.0) / size / sqrt 3.0)
     in (col, row)
 
-handleInput :: Event -> Battle -> Battle
+handleInput :: Event -> Battle -> IO Battle
 handleInput event b = 
     let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
         hasControl = control $ maybe def id $ squad $ maybe def id $ selection b
     in case (event, hasControl, movingSquad b) of
-        (                                           _,         _, Just _) -> b
-        (EventKey (MouseButton LeftButton) Down _ pos, NoControl,      _) -> selectPosition b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,    Player,      _) -> secondClickAfterSelection b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,   EnemyAI,      _) -> secondClickAfterSelection b $ pixelToEvenr size pos
-        (                                           _,         _,      _) -> b
+        (                                           _,         _, Just _) -> return $ b
+        (EventKey ( SpecialKey     KeyEsc) Down _ pos,         _,      _) -> exitSuccess
+        (EventKey (MouseButton LeftButton) Down _ pos, NoControl,      _) -> return $ selectPosition b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,    Player,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,   EnemyAI,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
+        (                                           _,         _,      _) -> return $ b
 
 selectPosition :: Battle -> Position -> Battle
 selectPosition b (x,y) =

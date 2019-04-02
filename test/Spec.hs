@@ -1,4 +1,3 @@
-import Graphics.Gloss
 import Battle
 import DrawBattle
 import Squad
@@ -6,15 +5,16 @@ import Const
 import InteractBattle
 import Animate
 import Data.Default
+import Graphics.Gloss.Interface.IO.Game
 
 --printCellPos :: [Cell] -> IO ()
 --printCellPos cells = print (foldr (\x res -> (position x):res) [] cells)
 
 main :: IO ()
 main = 
-    let f = generateHexField 6 5
+    let f = generateHexField 9 7
         c = def {position = (1,1), terrain = TerPlain}
-        b = def {otherCells = f, fieldWidth = 6, fieldHeight = 5}
+        b = def {otherCells = f, fieldWidth = 9, fieldHeight = 7}
         b1 = modifyBattleWithCell (c {position = (1,1), terrain = TerPlain, squad = Just (def {control = Player, rotation = 360.0, units = take 7 $ repeat def})}) b
         b2 = modifyBattleWithCell (c {position = (2,2), terrain = TerPlain, squad = Just (def {control = EnemyAI, rotation = 360.0, units = take 9 $ repeat def})}) b1
         b3 = modifyBattleWithCell (c {position = (3,2), terrain = TerPlain, squad = Just (def {control = EnemyAI, rotation = 360.0, units = take 9 $ repeat def})}) b2
@@ -25,4 +25,4 @@ main =
     --in printCellPos (getCellsOnMarchDistanceOrLess 2 b1 c)
     --in print (getMarchDistance b1 c (c {position = (3,3)}))
     --in drawGame b3
-    in play window bgColor framesPerSecond b4 drawBattle handleInput animateBattle
+    in playIO window bgColor framesPerSecond b4 drawBattle handleInput animateBattle
