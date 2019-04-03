@@ -7,6 +7,7 @@ import Squad
 import MovingSquad hiding (squad,rotation,position,animation)
 import qualified MovingSquad (squad,rotation,position,animation)
 import Data.Default
+import Data.List
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
@@ -70,17 +71,20 @@ getCellsOnMarchDistanceOrLess n b c = excludeCell (clearFromDuplicates (getCells
 outCell :: Cell -> String
 outCell c = "("++show (fst $ position c)++","++show (snd $ position c)++") "
 
-getMarchDistance' :: Int -> Battle -> Cell -> Cell -> Int
-getMarchDistance' n b c1 c2 | (n > (fieldHeight b)) && (n > (fieldWidth b)) = error $ "Impossible #2 : " ++ outCell c1 ++ outCell c2
-                            | any (\x -> position x == position c1) (getCellsOnMarchDistanceOrLess n b c2) = n
-                            | otherwise = getMarchDistance' (n+1) b c1 c2
+getMarchDistance' :: Int -> Battle -> Cell -> Cell -> [Cell] -> Int
+getMarchDistance' n b c1 c2 oldCOMD | null (excludeCells newCOMD oldCOMD) = 9999
+                                    | (n > (fieldHeight b) + (fieldWidth b)) = error $ "Impossible #2 : " ++ outCell c1 ++ outCell c2
+                                    | any (\x -> position x == position c2) (getCellsOnMarchDistanceOrLess n b c1) = n
+                                    | otherwise = getMarchDistance' (n+1) b c1 c2 newCOMD
+    where newCOMD = (getCellsOnMarchDistanceOrLess n b c1)
 
 getPossibleMoves :: Battle -> Cell -> Int -> [Cell]
 getPossibleMoves b c n = getCellsOnMarchDistanceOrLess n b c
 
 -- get distance with obstacles
 getMarchDistance :: Battle -> Cell -> Cell -> Int
-getMarchDistance b c1 c2 = getMarchDistance' 1 b c1 c2
+getMarchDistance b c1 c2 | (position c1 /= position c2) = getMarchDistance' 1 b c1 c2 []
+                         | otherwise = 0
 
 removeSelection :: Battle -> Battle
 removeSelection b =
@@ -128,9 +132,10 @@ leaveLess (x:xs) ys = leaveLess xs (leaveLessSingle x ys)
 buildMarchDistanceMap :: Int -> Battle -> Cell -> [(Int, Position)]
 buildMarchDistanceMap n b c = leaveLess (buildMarchDistanceMap' n b c) []
 
-nextRouteStep :: Float -> Int -> Position -> Float -> [(Int, Position)] -> [Animation]
-nextRouteStep _ 0 _ _ _ = []
-nextRouteStep size n pos rot map = 
+nextRouteStep :: Float -> Int -> Int -> Position -> Float -> [(Int, Position)] -> [Animation]
+nextRouteStep _ _ 0 _ _ _ = []
+nextRouteStep _ 0 _ _ _ _ = []
+nextRouteStep size n steps pos rot map = 
     let left = Hex.left pos
         right = Hex.right pos
         leftUp = Hex.leftUp pos
@@ -138,17 +143,17 @@ nextRouteStep size n pos rot map =
         leftDown = Hex.leftDown pos
         rightUp = Hex.rightUp pos
     in case (filter (\(i,p) -> i == (n-1) && p == left) map) of
-        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size left) rot 540.0)++(nextRouteStep size (n-1) left 540.0 map)
+        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size left) rot 540.0)++(nextRouteStep size (n-1) (steps-1) left 540.0 map)
         (  []) -> case (filter (\(i,p) -> i == (n-1) && p == right) map) of
-            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size right) rot 360.0)++(nextRouteStep size (n-1) right 360.0 map)
+            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size right) rot 360.0)++(nextRouteStep size (n-1) (steps-1) right 360.0 map)
             (  []) -> case (filter (\(i,p) -> i == (n-1) && p == leftUp) map) of
-                (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftUp) rot 480.0)++(nextRouteStep size (n-1) leftUp 480.0 map)
+                (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftUp) rot 480.0)++(nextRouteStep size (n-1) (steps-1) leftUp 480.0 map)
                 (  []) -> case (filter (\(i,p) -> i == (n-1) && p == rightDown) map) of
-                    (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightDown) rot 660.0)++(nextRouteStep size (n-1) rightDown 660.0 map)
+                    (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightDown) rot 660.0)++(nextRouteStep size (n-1) (steps-1) rightDown 660.0 map)
                     (  []) -> case (filter (\(i,p) -> i == (n-1) && p == leftDown) map) of
-                        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftDown) rot 600.0)++(nextRouteStep size (n-1) leftDown 600.0 map)
+                        (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size leftDown) rot 600.0)++(nextRouteStep size (n-1) (steps-1) leftDown 600.0 map)
                         (  []) -> case (filter (\(i,p) -> i == (n-1) && p == rightUp) map) of
-                            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightUp) rot 420.0)++(nextRouteStep size (n-1) rightUp 420.0 map)
+                            (x:xs) -> (generateMovement (Hex.evenrToPixel size pos) (Hex.evenrToPixel size rightUp) rot 420.0)++(nextRouteStep size (n-1) (steps-1) rightUp 420.0 map)
                             (  []) -> error $ "Impossible #5 : " ++ show map
 
 -- "reversed" in the name underlines that we seek the pass from second point for optimization
@@ -156,7 +161,7 @@ buildRouteReversed :: Battle -> Float -> Cell -> Float -> Cell -> [Animation]
 buildRouteReversed b size c1 rot c2 =
     let dist = getMarchDistance b c1 c2
         map = buildMarchDistanceMap dist b c2
-    in nextRouteStep size dist (position c1) rot (buildMarchDistanceMap dist b c2)
+    in nextRouteStep size dist dist (position c1) rot map
 
 -- !!!previously selected cell should be here as c1
 moveSquadAnimated :: Battle -> Float -> Cell -> Cell -> Battle
@@ -175,10 +180,10 @@ moveSquadAnimated b size c1 c2 =
 
 -- check whether player won, lost or is still playing
 checkGameState :: Battle -> GameState
-checkGameState b = case (allies b, enemies b, enemiesRemaining b) of
-    ([], _,_) -> Lose
-    ( _,[],0) -> Win
-    ( _, _,_) -> Playing
+checkGameState b = case (allies b, enemies b) of
+    ([], _) -> Lose
+    ( _,[]) -> Win
+    ( _, _) -> Playing
 
 member' :: Position -> [Position] -> Bool
 member' pos posList = foldr (\y res -> res || pos == y) False posList

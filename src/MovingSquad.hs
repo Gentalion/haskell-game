@@ -1,12 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module MovingSquad ( animateMovingSquad
-                   , MovingSquad(..)
-                   , Rotation
-                   , Movement
-                   , Animation
-                   , generateMovement) where
+module MovingSquad where
 
 import Squad (Squad)
 import qualified Squad as Squad
@@ -92,3 +87,21 @@ generateMovement pos destinationPos rot destinationRot | rot /= destinationRot =
                                                                                  :[])
                                                        | otherwise = ((Right $ Movement {tmax = destinationPos, delta = deltaPoint pos destinationPos $ movementAnimationTime})
                                                                      :[])
+
+destinationFromAnimation :: [Animation] -> Float -> Position
+destinationFromAnimation animation size =
+    let lastA = last animation
+        sizeTuple = (size, windowWidth, windowHeight)
+    in case (lastA) of
+        (Left  _) -> (-2,-2)
+        (Right m) -> pixelToEvenr sizeTuple $ naturalOffset sizeTuple $ (tmax :: Movement -> Point) m
+
+getSmth :: [Animation] -> String
+getSmth [] = ""
+getSmth ((Left x):xs) = show $ (tmax :: Rotation -> Float) x
+getSmth ((Right x):xs) = show $ (tmax :: Movement -> Point) x
+
+getSmth' :: MovingSquad -> [Animation] -> String
+getSmth' ms [] = ""
+getSmth' ms ((Left x):xs) = show $ (delta :: Rotation -> Float) x
+getSmth' ms ((Right x):xs) = show $ (position ms)+++((delta :: Movement -> Point) x)

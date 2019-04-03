@@ -98,6 +98,10 @@ drawBattle b =
                           :(drawCellList sizeTuple (white, 0.0) (allies b))
                           :(drawCellList sizeTuple (white, 0.0) (enemies b))
                           :(drawSquad'   size (naturalOffset sizeTuple $ MovingSquad.position ms) (MovingSquad.rotation ms) (MovingSquad.squad ms))
+                          :(translate (-200.0) 0.0 $ text $ show $ length $ MovingSquad.animation ms)
+                          :(text $ show $ MovingSquad.rotation ms)
+                          :(translate (-500.0) 200.0 $ text $ MovingSquad.getSmth $ MovingSquad.animation ms)
+                          :(translate (-500.0) (-300.0) $ text $ MovingSquad.getSmth' ms $ MovingSquad.animation ms)
                           :[])
 
 -- Game display mode.

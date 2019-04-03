@@ -14,7 +14,7 @@ main :: IO ()
 main = 
     let f = generateHexField 9 7
         c = def {position = (1,1), terrain = TerPlain}
-        b = def {otherCells = f, fieldWidth = 9, fieldHeight = 7}
+        b = def {otherCells = f, fieldWidth = 9, fieldHeight = 7, targetsForEnemies = [(0,0)]}
         b1 = modifyBattleWithCell (c {position = (1,1), terrain = TerPlain, squad = Just (def {control = Player, rotation = 360.0, units = take 7 $ repeat def})}) b
         b2 = modifyBattleWithCell (c {position = (2,2), terrain = TerPlain, squad = Just (def {control = Enemy, rotation = 360.0, units = take 9 $ repeat def})}) b1
         b3 = modifyBattleWithCell (c {position = (3,2), terrain = TerPlain, squad = Just (def {control = Enemy, rotation = 360.0, units = take 9 $ repeat def})}) b2

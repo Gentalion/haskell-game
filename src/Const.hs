@@ -48,3 +48,11 @@ maxDamageFromAttackerPower = 0.25
 
 maxDamageFromDefenderPower :: Float
 maxDamageFromDefenderPower = 0.1
+
+pixelToEvenr :: (Float, Int, Int) -> (Float, Float) -> (Int, Int)
+pixelToEvenr (size, width, height) (x1,y1) =
+    let (x2,y2) = (naturalOffset (size, width, height) (0.0,0.0))
+        (x,y) = (x1-x2,y1-y2)
+        row = round (- 2/3 * y / size)
+        col = round ((x + 0.5 * (fromIntegral (mod row 2)) * size * sqrt 3.0) / size / sqrt 3.0)
+    in (col, row)

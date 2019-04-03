@@ -1,13 +1,9 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-
 module Battle where
 
 import Hex (Position)
 import Squad (Squad(..), Control(..))
 import Data.Default
 import MovingSquad (MovingSquad)
-import Graphics.Gloss (Point)
 import Const
 
 data GameState = Win | Lose | Playing
@@ -30,12 +26,14 @@ type SquadPos = (Position, Float)
 type Step = (SquadPos, SquadPos)
 type Turn = [Step]
 
+-- only cells from movingEnemies can duplicate other cells positions
 data Battle = Battle { otherCells :: [Cell]
                      , fieldHeight :: Int
                      , fieldWidth :: Int
                      , allies :: [Cell]
                      , enemies :: [Cell]
-                     , enemiesRemaining :: Int
+                     , movingEnemies :: [Cell]
+                     , targetsForEnemies :: [Position]
                      , selection :: Maybe Cell
                      , possibleMoves :: [Cell]
                      , previousTurns :: [Turn]
@@ -48,7 +46,8 @@ instance Default Battle where
                  , fieldWidth = 0
                  , allies = []
                  , enemies = []
-                 , enemiesRemaining = 0
+                 , movingEnemies = []
+                 , targetsForEnemies = []
                  , selection = Nothing
                  , possibleMoves = []
                  , previousTurns = []
