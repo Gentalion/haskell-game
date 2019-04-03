@@ -8,20 +8,18 @@ import Hex (Position)
 import Data.Default
 import System.Exit
 import Distances
-import EnemyAI
 
 handleInput :: Event -> Battle -> IO Battle
 handleInput event b = 
     let size = (hexMaximumInWindowSize windowWidth windowHeight (fieldWidth b) (fieldHeight b), windowWidth, windowHeight)
         hasControl = control $ maybe def id $ squad $ maybe def id $ selection b
-    in case (event, hasControl, movingSquad b) of
-        (                                           _,         _, Just _) -> return b
-        (EventKey ( SpecialKey     KeyEsc) Down _ pos,         _,      _) -> exitSuccess
-        (EventKey ( SpecialKey   KeySpace)   Up _ pos,         _,      _) -> return $ enemyTurn b
-        (EventKey (MouseButton LeftButton) Down _ pos, NoControl,      _) -> return $ selectPosition b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,    Player,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
-        (EventKey (MouseButton LeftButton) Down _ pos,     Enemy,      _) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
-        (                                           _,         _,      _) -> return $ b
+    in case (event, hasControl, animation b) of
+        (EventKey ( SpecialKey     KeyEsc) Down _ pos,         _,[]) -> exitSuccess
+        (EventKey ( SpecialKey   KeySpace)   Up _ pos,         _,[]) -> return $ enemyTurn b
+        (EventKey (MouseButton LeftButton) Down _ pos, NoControl,[]) -> return $ selectPosition b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,    Player,[]) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
+        (EventKey (MouseButton LeftButton) Down _ pos,     Enemy,[]) -> return $ secondClickAfterSelection b $ pixelToEvenr size pos
+        (                                           _,         _, _) -> return b
 
 enemyTurn :: Battle -> Battle
 enemyTurn b =

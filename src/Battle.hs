@@ -37,7 +37,7 @@ data Battle = Battle { otherCells :: [Cell]
                      , selection :: Maybe Cell
                      , possibleMoves :: [Cell]
                      , previousTurns :: [Turn]
-                     , movingSquad :: Maybe MovingSquad
+                     , animation :: [MovingSquad]
                      }
 
 instance Default Battle where
@@ -51,7 +51,7 @@ instance Default Battle where
                  , selection = Nothing
                  , possibleMoves = []
                  , previousTurns = []
-                 , movingSquad = Nothing
+                 , animation = []
                  }
 
 -- generate field with such height and width

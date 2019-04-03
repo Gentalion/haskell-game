@@ -21,12 +21,12 @@ singleEnemyTurnToKnownTarget b size c1 c2 =
         (9999) -> b
         (   _) -> b { otherCells = (c1 {squad = Nothing}):(otherCells b)
                     , enemies = excludeCell (enemies b) c1
-                    , movingSquad = Just def { MS.squad = c1squad
-                                             , MS.position = evenrToPixel (hexSize b) $ position c1
-                                             , MS.rotation = rot
-                                             , MS.animation = movementAnimation
-                                             , MS.destination = MS.destinationFromAnimation movementAnimation size
-                                             }
+                    , animation = (def { MS.squad = c1squad
+                                       , MS.position = evenrToPixel (hexSize b) $ position c1
+                                       , MS.rotation = rot
+                                       , MS.animation = movementAnimation
+                                       , MS.destination = MS.destinationFromAnimation movementAnimation size
+                                       }):[]
                     }
 
 singleEnemyTurn :: Battle -> Cell -> Battle

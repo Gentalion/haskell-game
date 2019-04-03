@@ -170,12 +170,12 @@ moveSquadAnimated b size c1 c2 =
         rot = rotation c1Squad
         b1 = (removeSelection' b)
     in b1 { otherCells = (c1 {squad = Nothing}):(otherCells b1) 
-          , movingSquad = Just def { MovingSquad.squad = c1Squad
-                                   , MovingSquad.rotation = rot
-                                   , MovingSquad.position = Hex.evenrToPixel size $ position c1
-                                   , MovingSquad.animation = buildRouteReversed b1 size c1 rot c2
-                                   , MovingSquad.destination = position c2
-                                   }
+          , animation = (def { MovingSquad.squad = c1Squad
+                            , MovingSquad.rotation = rot
+                            , MovingSquad.position = Hex.evenrToPixel size $ position c1
+                            , MovingSquad.animation = buildRouteReversed b1 size c1 rot c2
+                            , MovingSquad.destination = position c2
+                            }):[]
           }
 
 -- check whether player won, lost or is still playing

@@ -87,22 +87,22 @@ drawBattle :: Battle -> IO Picture
 drawBattle b = 
     let size = hexSize b
         sizeTuple = (size, windowWidth, windowHeight)
-    in case (movingSquad b) of
-    (Nothing) -> return $ pictures ((drawCellList sizeTuple (colorSelection b $ selection b, 0.5) (possibleMoves b))
-                          :(drawCellList sizeTuple (white, 0.0) (otherCells b))
-                          :(drawCellList sizeTuple (white, 0.0) (allies b))
-                          :(drawCellList sizeTuple (white, 0.0) (enemies b))
-                          :(drawCell     sizeTuple (colorSelection b $ selection b, 2.0) $ maybe def id $ selection b)
-                          :[])
-    (Just ms) -> return $ pictures ((drawCellList sizeTuple (white, 0.0) (otherCells b))
-                          :(drawCellList sizeTuple (white, 0.0) (allies b))
-                          :(drawCellList sizeTuple (white, 0.0) (enemies b))
-                          :(drawSquad'   size (naturalOffset sizeTuple $ MovingSquad.position ms) (MovingSquad.rotation ms) (MovingSquad.squad ms))
-                          :(translate (-200.0) 0.0 $ text $ show $ length $ MovingSquad.animation ms)
-                          :(text $ show $ MovingSquad.rotation ms)
-                          :(translate (-500.0) 200.0 $ text $ MovingSquad.getSmth $ MovingSquad.animation ms)
-                          :(translate (-500.0) (-300.0) $ text $ MovingSquad.getSmth' ms $ MovingSquad.animation ms)
-                          :[])
+    in case (animation b) of
+    (  []) -> return $ pictures ((drawCellList sizeTuple (colorSelection b $ selection b, 0.5) (possibleMoves b))
+                                :(drawCellList sizeTuple (white, 0.0) (otherCells b))
+                                :(drawCellList sizeTuple (white, 0.0) (allies b))
+                                :(drawCellList sizeTuple (white, 0.0) (enemies b))
+                                :(drawCell     sizeTuple (colorSelection b $ selection b, 2.0) $ maybe def id $ selection b)
+                                :[])
+    (anim) -> return $ pictures ((drawCellList sizeTuple (white, 0.0) (otherCells b))
+                                :(drawCellList sizeTuple (white, 0.0) (allies b))
+                                :(drawCellList sizeTuple (white, 0.0) (enemies b))
+                                :(pictures $ map (\ms -> drawSquad' size (naturalOffset sizeTuple $ MovingSquad.position ms) (MovingSquad.rotation ms) (MovingSquad.squad ms)) anim)
+                                :(translate (-200.0) 0.0 $ text $ show $ length $ MovingSquad.animation $ head anim)
+                                :(text $ show $ MovingSquad.rotation $ head anim)
+                                :(translate (-500.0) 200.0 $ text $ MovingSquad.getSmth $ MovingSquad.animation $ head anim)
+                                :(translate (-500.0) (-300.0) $ text $ MovingSquad.getSmth' (head anim) $ MovingSquad.animation $ head anim)
+                                :[])
 
 -- Game display mode.
 window :: Display
