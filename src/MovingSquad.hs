@@ -19,12 +19,12 @@ data Movement = Movement { delta :: Point
                          , tmax :: Point
                          }
 
-type Animation = Either Rotation Movement
+type MSAnimation = Either Rotation Movement
 
 data MovingSquad = MovingSquad { squad :: Squad
                                , position :: Point
                                , rotation :: Float
-                               , animation :: [Animation]
+                               , animation :: [MSAnimation]
                                , destination :: Position
                                }
 
@@ -81,14 +81,14 @@ minimalRotation angle1 angle2 =
         ( True) -> Rotation {tmax = angle2, delta = signum (angle2 - angle1) * 60.0 / rotationOn60DegreesAnimationTime * 360.0 / fromIntegral framesPerSecond}
         (False) -> Rotation {tmax = angle2, delta = signum (180.0 - (angle2 - angle1)) * 60.0 / rotationOn60DegreesAnimationTime * 360.0 / fromIntegral framesPerSecond}
 
-generateMovement :: Point -> Point -> Float -> Float -> [Animation]
+generateMovement :: Point -> Point -> Float -> Float -> [MSAnimation]
 generateMovement pos destinationPos rot destinationRot | rot /= destinationRot = ((Left $ minimalRotation rot destinationRot)
                                                                                  :(Right $ Movement {tmax = destinationPos, delta = deltaPoint pos destinationPos $ movementAnimationTime})
                                                                                  :[])
                                                        | otherwise = ((Right $ Movement {tmax = destinationPos, delta = deltaPoint pos destinationPos $ movementAnimationTime})
                                                                      :[])
 
-destinationFromAnimation :: [Animation] -> Float -> Position
+destinationFromAnimation :: [MSAnimation] -> Float -> Position
 destinationFromAnimation animation size =
     let lastA = last animation
         sizeTuple = (size, windowWidth, windowHeight)
@@ -96,12 +96,12 @@ destinationFromAnimation animation size =
         (Left  _) -> (-2,-2)
         (Right m) -> pixelToEvenr sizeTuple $ naturalOffset sizeTuple $ (tmax :: Movement -> Point) m
 
-getSmth :: [Animation] -> String
+getSmth :: [MSAnimation] -> String
 getSmth [] = ""
 getSmth ((Left x):xs) = show $ (tmax :: Rotation -> Float) x
 getSmth ((Right x):xs) = show $ (tmax :: Movement -> Point) x
 
-getSmth' :: MovingSquad -> [Animation] -> String
+getSmth' :: MovingSquad -> [MSAnimation] -> String
 getSmth' ms [] = ""
 getSmth' ms ((Left x):xs) = show $ (delta :: Rotation -> Float) x
 getSmth' ms ((Right x):xs) = show $ (position ms)+++((delta :: Movement -> Point) x)

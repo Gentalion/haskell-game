@@ -8,6 +8,8 @@ import MovingSquad hiding (squad,rotation,position,animation)
 import qualified MovingSquad (squad,rotation,position,animation)
 import Data.Default
 import Data.List
+import Data.PQueue.Prio.Min (MinPQueue)
+import qualified Data.PQueue.Prio.Min as PQ
 
 getStraightDistance :: Cell -> Cell -> Int
 getStraightDistance c1 c2 = Hex.getStraightDistance (position c1) (position c2)
@@ -71,20 +73,63 @@ getCellsOnMarchDistanceOrLess n b c = excludeCell (clearFromDuplicates (getCells
 outCell :: Cell -> String
 outCell c = "("++show (fst $ position c)++","++show (snd $ position c)++") "
 
-getMarchDistance' :: Int -> Battle -> Cell -> Cell -> [Cell] -> Int
-getMarchDistance' n b c1 c2 oldCOMD | null (excludeCells newCOMD oldCOMD) = 9999
+getMarchDistanceBFS :: Int -> Battle -> Cell -> Cell -> [Cell] -> Int
+getMarchDistanceBFS n b c1 c2 oldCOMD | null (excludeCells newCOMD oldCOMD) = 9999
                                     | (n > (fieldHeight b) + (fieldWidth b)) = error $ "Impossible #2 : " ++ outCell c1 ++ outCell c2
                                     | any (\x -> position x == position c2) (getCellsOnMarchDistanceOrLess n b c1) = n
-                                    | otherwise = getMarchDistance' (n+1) b c1 c2 newCOMD
+                                    | otherwise = getMarchDistanceBFS (n+1) b c1 c2 newCOMD
     where newCOMD = (getCellsOnMarchDistanceOrLess n b c1)
 
 getPossibleMoves :: Battle -> Cell -> Int -> [Cell]
 getPossibleMoves b c n = getCellsOnMarchDistanceOrLess n b c
 
--- get distance with obstacles
+getNextInnerLayer :: Battle -> [Cell] -> [Cell] -> [Cell]
+getNextInnerLayer b interier inner = 
+    let nextInnerPlus = filter notObstacle $ foldr (++) [] $ map (getNeighbors b) inner
+        prev = interier++inner
+    in foldr (\x res -> if ((member x res) || (member x prev)) then res else x:res) [] nextInnerPlus
+
+intersectCellsBool :: [Cell] -> [Cell] -> Bool
+intersectCellsBool m1 m2 = foldr (\x res -> (member x m1) || res) False m2
+
+getMarchDistanceBFS2 :: Battle -> (Int,[Cell],[Cell]) -> (Int,[Cell],[Cell]) -> Int
+getMarchDistanceBFS2 b (d1,oldCOMD1,inner1) (d2,oldCOMD2,inner2) =
+    case ((d1 + d2 > (fieldWidth b) + (fieldHeight b)) || null inner1 || null inner2, d1 > d2) of
+        (True ,    _) -> 9999
+        (False, True) -> 
+            let newCOMD2 = inner2++oldCOMD2
+                newInner2 = getNextInnerLayer b oldCOMD2 inner2
+            in case (intersectCellsBool inner1 newInner2) of 
+                ( True) -> d1 + d2 + 1
+                (False) -> getMarchDistanceBFS2 b (d1,oldCOMD2,inner1) (d2+1,newCOMD2,newInner2)
+        (False,False) ->
+            let newCOMD1 = inner1++oldCOMD1
+                newInner1 = getNextInnerLayer b oldCOMD1 inner1
+            in case (intersectCellsBool newInner1 inner2) of
+                ( True) -> d1 + d2 + 1
+                (False) -> getMarchDistanceBFS2 b (d1+1,newCOMD1,newInner1) (d2,oldCOMD2,inner2)
+
+getMarchDistanceAStar :: Battle -> Cell -> MinPQueue Int Cell -> Int
+getMarchDistanceAStar b destCell pq = 
+    let (curDist,curCell) = PQ.findMin pq
+        realDistFromStart = curDist - getStraightDistance curCell destCell
+        curNeighbors = filter notObstacle $ getNeighbors b curCell
+        curNeighborsWithDist = map (\x -> (getStraightDistance x destCell,x)) curNeighbors
+    in case (realDistFromStart > 4, any (\(dist,cell) -> dist == 0) curNeighborsWithDist) of
+        (    _, True) -> realDistFromStart + 1
+        (False,False) -> getMarchDistanceAStar b destCell $ foldr (\(dist,cell) res -> PQ.insert (dist + realDistFromStart + 1) cell res) pq curNeighborsWithDist
+        ( True,    _) -> 9999
+
+--getMarchDistance :: Battle -> Cell -> Cell -> Int
+--getMarchDistance b c1 c2 | (position c1 /= position c2) = getMarchDistanceAStar b c2 $ PQ.insert (getStraightDistance c1 c2) c1 PQ.empty
+--                         | otherwise = 0
 getMarchDistance :: Battle -> Cell -> Cell -> Int
-getMarchDistance b c1 c2 | (position c1 /= position c2) = getMarchDistance' 1 b c1 c2 []
+getMarchDistance b c1 c2 | (position c1 /= position c2) = getMarchDistanceBFS2 b (0,[],[c1]) (0,[],[c2])
                          | otherwise = 0
+-- get distance with obstacles
+--getMarchDistance :: Battle -> Cell -> Cell -> Int
+--getMarchDistance b c1 c2 | (position c1 /= position c2) = getMarchDistanceBFS 1 b c1 c2 []
+--                         | otherwise = 0
 
 removeSelection :: Battle -> Battle
 removeSelection b =
@@ -132,7 +177,7 @@ leaveLess (x:xs) ys = leaveLess xs (leaveLessSingle x ys)
 buildMarchDistanceMap :: Int -> Battle -> Cell -> [(Int, Position)]
 buildMarchDistanceMap n b c = leaveLess (buildMarchDistanceMap' n b c) []
 
-nextRouteStep :: Float -> Int -> Int -> Position -> Float -> [(Int, Position)] -> [Animation]
+nextRouteStep :: Float -> Int -> Int -> Position -> Float -> [(Int, Position)] -> [MSAnimation]
 nextRouteStep _ _ 0 _ _ _ = []
 nextRouteStep _ 0 _ _ _ _ = []
 nextRouteStep size n steps pos rot map = 
@@ -157,7 +202,7 @@ nextRouteStep size n steps pos rot map =
                             (  []) -> error $ "Impossible #5 : " ++ show map
 
 -- "reversed" in the name underlines that we seek the pass from second point for optimization
-buildRouteReversed :: Battle -> Float -> Cell -> Float -> Cell -> [Animation]
+buildRouteReversed :: Battle -> Float -> Cell -> Float -> Cell -> [MSAnimation]
 buildRouteReversed b size c1 rot c2 =
     let dist = getMarchDistance b c1 c2
         map = buildMarchDistanceMap dist b c2

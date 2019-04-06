@@ -36,7 +36,7 @@ data Squad = Squad { name :: String
                    }
 
 instance Default Squad where
-    def = Squad {name = "", control = def, rotation = 0.0, steps = 3, maxSteps = 3, attackDist = 0, units = [], mods = []}
+    def = Squad {name = "", control = def, rotation = 0.0, steps = 6, maxSteps = 3, attackDist = 0, units = [], mods = []}
 
 -- filter all modifiers with ModifierType equal ModAddWhite and sum them
 allMAW :: [Modifier] -> Float

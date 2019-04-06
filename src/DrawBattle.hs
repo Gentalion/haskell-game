@@ -98,10 +98,6 @@ drawBattle b =
                                 :(drawCellList sizeTuple (white, 0.0) (allies b))
                                 :(drawCellList sizeTuple (white, 0.0) (enemies b))
                                 :(pictures $ map (\ms -> drawSquad' size (naturalOffset sizeTuple $ MovingSquad.position ms) (MovingSquad.rotation ms) (MovingSquad.squad ms)) anim)
-                                :(translate (-200.0) 0.0 $ text $ show $ length $ MovingSquad.animation $ head anim)
-                                :(text $ show $ MovingSquad.rotation $ head anim)
-                                :(translate (-500.0) 200.0 $ text $ MovingSquad.getSmth $ MovingSquad.animation $ head anim)
-                                :(translate (-500.0) (-300.0) $ text $ MovingSquad.getSmth' (head anim) $ MovingSquad.animation $ head anim)
                                 :[])
 
 -- Game display mode.
@@ -110,3 +106,7 @@ window = InWindow "Game" (windowWidth, windowHeight) (10,10)
 
 --drawGame :: Battle -> IO ()
 --drawGame b = display window bgColor (drawBattle b) 
+{-:(translate (-200.0) 0.0 $ text $ show $ length $ MovingSquad.animation $ head anim)
+                                :(text $ show $ MovingSquad.rotation $ head anim)
+                                :(translate (-500.0) 200.0 $ text $ MovingSquad.getSmth $ MovingSquad.animation $ head anim)
+                                :(translate (-500.0) (-300.0) $ text $ MovingSquad.getSmth' (head anim) $ MovingSquad.animation $ head anim)-}

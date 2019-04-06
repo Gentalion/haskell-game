@@ -13,6 +13,7 @@ dependencies:
 - gloss
 - containers
 - data-default
+- pqueue
 
 library:
   source-dirs: src

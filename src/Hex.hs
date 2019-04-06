@@ -1,6 +1,8 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+
 module Hex where
 
-type Position = (Int, Int) -- first int stands for column, second for row
+type Position = (Int, Int)-- first int stands for column, second for row
 
 left :: Position -> Position
 left (x, y) = (x - 1, y)
