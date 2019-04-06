@@ -1,30 +1,8 @@
-# project-template
+This is single player game with squads moving on hexogonal grid and trying to stop enemies managed by simple AI which is trying to find shortest distance to one of it's goals.
 
-Шаблон проекта для выполнения практического задания.
-
-## Сборка и запуск
-
-Соберите проект при помощи [утилиты Stack](https://www.haskellstack.org):
-
-```
-stack setup
-stack build
-```
-
-Собрать и запустить проект можно при помощи команды:
-
-```
-stack build && stack exec my-project
-```
-
-Запустить тесты можно при помощи команды:
+Since the project is still in development you can view the finished part with
 
 ```
 stack test
 ```
 
-Чтобы запустить интепретатор GHCi и автоматически подгрузить все модули проекта, используйте команду:
-
-```
-stack ghci
-```
